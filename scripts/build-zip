@@ -1,12 +1,55 @@
 #!/usr/bin/env bash
+# Build a WordPress-ready ZIP for uploading via Plugins > Add New > Upload.
+# The ZIP extracts to battle-shield-sponsorship/ inside wp-content/plugins/.
+#
+# Usage:
+#   ./scripts/build-zip          # builds dist/battle-shield-sponsorship-<version>.zip
+#   ./scripts/build-zip --dev    # skips composer --no-dev (keeps dev deps)
+
 set -euo pipefail
 
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+PLUGIN_DIR="$REPO_ROOT/plugin"
 PLUGIN_SLUG="battle-shield-sponsorship"
-DIST_DIR="$(dirname "$0")/../dist"
+DIST_DIR="$REPO_ROOT/dist"
+
+# Read version from the main plugin file.
+VERSION=$(grep -E "^\s*\*\s*Version:" "$PLUGIN_DIR/battle-shield-sponsorship.php" \
+    | head -1 | sed "s/.*Version:[[:space:]]*//")
+if [[ -z "$VERSION" ]]; then
+    echo "Error: could not read version from plugin file." >&2
+    exit 1
+fi
+
+OUT_ZIP="$DIST_DIR/${PLUGIN_SLUG}-${VERSION}.zip"
+
+# Run composer in the plugin directory if a composer.json exists.
+if [[ -f "$PLUGIN_DIR/composer.json" ]]; then
+    echo "Running composer install..."
+    if [[ "${1:-}" == "--dev" ]]; then
+        composer install --working-dir="$PLUGIN_DIR"
+    else
+        composer install --no-dev --optimize-autoloader --working-dir="$PLUGIN_DIR"
+    fi
+fi
 
 mkdir -p "$DIST_DIR"
-zip -r "$DIST_DIR/${PLUGIN_SLUG}.zip" plugin/ \
-    --exclude "*.DS_Store" \
-    --exclude "*.git*"
 
-echo "Built: $DIST_DIR/${PLUGIN_SLUG}.zip"
+# Build a temp staging dir so the zip root is the plugin slug.
+STAGING=$(mktemp -d)
+trap 'rm -rf "$STAGING"' EXIT
+
+mkdir "$STAGING/$PLUGIN_SLUG"
+rsync -a --exclude='.DS_Store' \
+         --exclude='*.git*' \
+         --exclude='README.md' \
+         "$PLUGIN_DIR/" "$STAGING/$PLUGIN_SLUG/"
+
+# Remove any existing zip for this version.
+rm -f "$OUT_ZIP"
+
+(cd "$STAGING" && zip -r "$OUT_ZIP" "$PLUGIN_SLUG" -x '*/.DS_Store')
+
+echo ""
+echo "Built: $OUT_ZIP"
+echo "Size:  $(du -sh "$OUT_ZIP" | cut -f1)"
