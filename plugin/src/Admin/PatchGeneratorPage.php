@@ -67,16 +67,23 @@ class PatchGeneratorPage {
             }
 
             if ( ! empty( $paid_sponsorships ) ) {
-                echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
-                echo '<input type="hidden" name="action" value="bss_generate_patches" />';
-                echo '<input type="hidden" name="campaign_id" value="' . $selected_campaign_id . '" />';
-                wp_nonce_field( self::NONCE_GENERATE );
+                echo '<p><strong>' . esc_html__( 'Batch download', 'battle-shield-sponsorship' ) . '</strong></p>';
 
-                echo '<p><label><input type="radio" name="scope" value="all" checked /> ' . esc_html__( 'All paid sponsorships', 'battle-shield-sponsorship' ) . '</label>&nbsp;&nbsp;';
-                echo '<label><input type="radio" name="scope" value="complete" /> ' . esc_html__( 'Complete artwork only', 'battle-shield-sponsorship' ) . '</label></p>';
-
-                submit_button( __( 'Generate PDF Patches', 'battle-shield-sponsorship' ), 'primary' );
-                echo '</form>';
+                foreach ( [
+                    [ 'label' => __( 'Download all patches (PDF)', 'battle-shield-sponsorship' ), 'scope' => 'all',      'format' => 'pdf' ],
+                    [ 'label' => __( 'Download complete artwork only (PDF)', 'battle-shield-sponsorship' ), 'scope' => 'complete', 'format' => 'pdf' ],
+                    [ 'label' => __( 'Download all patches (ZIP of individual PDFs)', 'battle-shield-sponsorship' ), 'scope' => 'all',      'format' => 'zip' ],
+                    [ 'label' => __( 'Download complete artwork only (ZIP)', 'battle-shield-sponsorship' ), 'scope' => 'complete', 'format' => 'zip' ],
+                ] as $btn ) {
+                    echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" style="display:inline;margin-right:8px;margin-bottom:8px;">';
+                    echo '<input type="hidden" name="action" value="bss_generate_patches" />';
+                    echo '<input type="hidden" name="campaign_id" value="' . $selected_campaign_id . '" />';
+                    echo '<input type="hidden" name="scope" value="' . esc_attr( $btn['scope'] ) . '" />';
+                    echo '<input type="hidden" name="format" value="' . esc_attr( $btn['format'] ) . '" />';
+                    wp_nonce_field( self::NONCE_GENERATE );
+                    echo '<button type="submit" class="button">' . esc_html( $btn['label'] ) . '</button>';
+                    echo '</form>';
+                }
             } else {
                 echo '<p>' . esc_html__( 'No paid sponsorships to generate patches for.', 'battle-shield-sponsorship' ) . '</p>';
             }
@@ -119,10 +126,11 @@ class PatchGeneratorPage {
 
         $campaign_id = (int) ( $_POST['campaign_id'] ?? 0 );
         $scope       = sanitize_key( wp_unslash( $_POST['scope'] ?? 'all' ) );
+        $format      = sanitize_key( wp_unslash( $_POST['format'] ?? 'pdf' ) );
 
         if ( 'single' === $scope ) {
             $sponsorship_id = (int) ( $_POST['sponsorship_id'] ?? 0 );
-            $nonce_key = '_wpnonce_' . $sponsorship_id;
+            $nonce_key      = '_wpnonce_' . $sponsorship_id;
             if ( ! isset( $_POST[ $nonce_key ] ) || ! wp_verify_nonce( sanitize_key( $_POST[ $nonce_key ] ), self::NONCE_GENERATE ) ) {
                 wp_die( esc_html__( 'Security check failed.', 'battle-shield-sponsorship' ) );
             }
@@ -135,14 +143,15 @@ class PatchGeneratorPage {
             wp_die( esc_html__( 'mPDF is not installed. Run composer install in the plugin directory.', 'battle-shield-sponsorship' ) );
         }
 
-        $service = new PatchGenerationService();
+        $service       = new PatchGenerationService();
+        $complete_only = 'complete' === $scope;
 
         if ( 'single' === $scope && $sponsorship_id > 0 ) {
             $service->generate_for_sponsorship( $sponsorship_id );
-        } elseif ( 'complete' === $scope ) {
-            $service->generate_for_campaign( $campaign_id, true );
+        } elseif ( 'zip' === $format ) {
+            $service->generate_zip_for_campaign( $campaign_id, $complete_only );
         } else {
-            $service->generate_for_campaign( $campaign_id, false );
+            $service->generate_for_campaign( $campaign_id, $complete_only );
         }
         exit;
     }

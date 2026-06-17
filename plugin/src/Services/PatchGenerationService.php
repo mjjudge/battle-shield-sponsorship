@@ -30,12 +30,12 @@ class PatchGenerationService {
         }
 
         $patches = [ $this->build_patch_data( $sponsorship, $sponsorship_service ) ];
-        $this->output_pdf( $patches, 'patch-' . $sponsorship_id );
+        $this->stream_pdf( $patches, 'patch-' . $sponsorship_id );
     }
 
     public function generate_for_campaign( int $campaign_id, bool $complete_only = false ): void {
         $sponsorship_service = new SponsorshipService();
-        $filters = [
+        $filters             = [
             'campaign_id'    => $campaign_id,
             'payment_status' => 'paid',
         ];
@@ -54,7 +54,61 @@ class PatchGenerationService {
             $patches[] = $this->build_patch_data( $s, $sponsorship_service );
         }
 
-        $this->output_pdf( $patches, 'patches-campaign-' . $campaign_id );
+        $this->stream_pdf( $patches, 'patches-campaign-' . $campaign_id );
+    }
+
+    public function generate_zip_for_campaign( int $campaign_id, bool $complete_only = false ): void {
+        if ( ! class_exists( '\ZipArchive' ) ) {
+            wp_die( esc_html__( 'ZipArchive PHP extension is not available on this server.', 'battle-shield-sponsorship' ) );
+        }
+
+        $sponsorship_service = new SponsorshipService();
+        $filters             = [
+            'campaign_id'    => $campaign_id,
+            'payment_status' => 'paid',
+        ];
+        if ( $complete_only ) {
+            $filters['artwork_status'] = 'complete';
+        }
+
+        $sponsorships = $sponsorship_service->get_all( $filters );
+
+        if ( empty( $sponsorships ) ) {
+            wp_die( esc_html__( 'No sponsorships found for ZIP generation.', 'battle-shield-sponsorship' ) );
+        }
+
+        $tmp_dir = trailingslashit( sys_get_temp_dir() ) . 'bss-patches-' . $campaign_id . '-' . time();
+        wp_mkdir_p( $tmp_dir );
+
+        $pdf_files = [];
+
+        foreach ( $sponsorships as $s ) {
+            $patch    = $this->build_patch_data( $s, $sponsorship_service );
+            $filename = sanitize_file_name( 'patch-' . (int) $s->id . '-' . $patch['display_name'] ) . '.pdf';
+            $dest     = $tmp_dir . '/' . $filename;
+            $this->write_pdf_to_file( [ $patch ], $dest );
+            $pdf_files[ $filename ] = $dest;
+        }
+
+        $zip_path = $tmp_dir . '.zip';
+        $zip      = new \ZipArchive();
+        $zip->open( $zip_path, \ZipArchive::CREATE );
+        foreach ( $pdf_files as $name => $path ) {
+            $zip->addFile( $path, $name );
+        }
+        $zip->close();
+
+        header( 'Content-Type: application/zip' );
+        header( 'Content-Disposition: attachment; filename="patches-campaign-' . $campaign_id . '.zip"' );
+        header( 'Content-Length: ' . filesize( $zip_path ) );
+        readfile( $zip_path );
+
+        // Clean up temp files.
+        foreach ( $pdf_files as $path ) {
+            @unlink( $path );
+        }
+        @unlink( $zip_path );
+        @rmdir( $tmp_dir );
     }
 
     private function build_patch_data( object $sponsorship, SponsorshipService $service ): array {
@@ -94,18 +148,29 @@ class PatchGenerationService {
         ];
     }
 
-    private function output_pdf( array $patches, string $filename ): void {
+    private function stream_pdf( array $patches, string $filename ): void {
+        $mpdf = $this->build_mpdf( $patches );
+        header( 'Content-Type: application/pdf' );
+        header( 'Content-Disposition: attachment; filename="' . sanitize_file_name( $filename ) . '.pdf"' );
+        $mpdf->Output( '', \Mpdf\Output\Destination::DOWNLOAD );
+    }
+
+    private function write_pdf_to_file( array $patches, string $dest_path ): void {
+        $this->build_mpdf( $patches )->Output( $dest_path, \Mpdf\Output\Destination::FILE );
+    }
+
+    private function build_mpdf( array $patches ): \Mpdf\Mpdf {
         $mpdf = new \Mpdf\Mpdf( [
-            'format'      => 'A4',
-            'orientation' => 'P',
-            'margin_top'  => 10,
+            'format'        => 'A4',
+            'orientation'   => 'P',
+            'margin_top'    => 10,
             'margin_bottom' => 10,
-            'margin_left' => 10,
-            'margin_right' => 10,
+            'margin_left'   => 10,
+            'margin_right'  => 10,
         ] );
 
         $mpdf->SetTitle( 'Battle Shield Sponsorship Patches' );
-        $mpdf->SetAuthor( get_option( 'blogname', 'Battle of Evesham' ) );
+        $mpdf->SetAuthor( (string) get_option( 'blogname', 'Battle of Evesham' ) );
 
         foreach ( $patches as $i => $patch ) {
             if ( $i > 0 ) {
@@ -114,9 +179,7 @@ class PatchGenerationService {
             $mpdf->WriteHTML( $this->render_patch_html( $patch ) );
         }
 
-        header( 'Content-Type: application/pdf' );
-        header( 'Content-Disposition: attachment; filename="' . sanitize_file_name( $filename ) . '.pdf"' );
-        $mpdf->Output( '', \Mpdf\Output\Destination::DOWNLOAD );
+        return $mpdf;
     }
 
     private function render_patch_html( array $patch ): string {

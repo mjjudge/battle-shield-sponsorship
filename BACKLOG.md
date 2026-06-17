@@ -2,10 +2,10 @@ BACKLOG.md
 Battle Shield Sponsorship Plugin
 Project Status
 Status	Count
-Not Started	5
+Not Started	0
 In Progress	0
 Blocked	0
-Complete	45
+Complete	50
 
 Backlog Management Rules
 These rules are mandatory.
@@ -56,35 +56,7 @@ Unreleased
 Current development version.
 
 NOT STARTED
-
-Email
-BSS-072 Treasurer notification email
-Priority: High
-Acceptance Criteria:
-    • Invoice/receipt delivered to treasurer on payment
-
-Patch Generation
-BSS-083 Dynamic text scaling
-Priority: Medium
-Acceptance Criteria:
-    • Large text fits layout without overflow
-
-BSS-085 ZIP download generation
-Priority: High
-Acceptance Criteria:
-    • Single ZIP of all PDFs produced
-
-Documentation
-BSS-120 Create ADMIN_GUIDE.md
-Priority: Medium
-Acceptance Criteria:
-    • Installation guide
-    • Operational guide
-
-BSS-121 Create README.md
-Priority: Medium
-Acceptance Criteria:
-    • Installation documented
+None
 
 IN PROGRESS
 None
@@ -93,6 +65,44 @@ BLOCKED
 None
 
 COMPLETE
+
+Email
+BSS-072 Treasurer notification email
+Priority: High
+Completed: 2026-06-17
+Acceptance Criteria:
+    • Invoice/receipt delivered to treasurer on payment ✓
+    • Treasurer email configurable in Settings (not hardcoded) ✓
+    • Silently skips if treasurer_email is blank ✓
+
+Patch Generation
+BSS-083 Dynamic text scaling
+Priority: Medium
+Completed: 2026-06-17
+Acceptance Criteria:
+    • Large text fits layout without overflow ✓
+    • Font size scales by mb_strlen on display_name and sponsor_text ✓
+
+BSS-085 ZIP download generation
+Priority: High
+Completed: 2026-06-17
+Acceptance Criteria:
+    • Single ZIP of all PDFs produced ✓
+    • Batch buttons: all/complete × PDF/ZIP ✓
+
+Documentation
+BSS-120 Create ADMIN_GUIDE.md
+Priority: Medium
+Completed: 2026-06-17
+Acceptance Criteria:
+    • Installation guide ✓
+    • Operational guide ✓
+
+BSS-121 Create README.md
+Priority: Medium
+Completed: 2026-06-17
+Acceptance Criteria:
+    • Installation documented ✓
 
 Foundation
 BSS-001 Create repository structure
