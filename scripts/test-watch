@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+while true; do
+    php tests/run.php "$@"
+    inotifywait -r -e modify,create,delete plugin/ tests/ 2>/dev/null || sleep 2
+done
