@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+PLUGIN_SLUG="battle-shield-sponsorship"
+DIST_DIR="$(dirname "$0")/../dist"
+
+mkdir -p "$DIST_DIR"
+zip -r "$DIST_DIR/${PLUGIN_SLUG}.zip" plugin/ \
+    --exclude "*.DS_Store" \
+    --exclude "*.git*"
+
+echo "Built: $DIST_DIR/${PLUGIN_SLUG}.zip"
