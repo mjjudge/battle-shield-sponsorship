@@ -92,7 +92,7 @@ class SponsorshipService {
             'display_name'   => sanitize_text_field( $data['display_name'] ?? '' ),
             'sponsor_text'   => sanitize_textarea_field( $data['sponsor_text'] ?? '' ) ?: null,
             'logo_attachment_id' => ! empty( $data['logo_attachment_id'] ) ? (int) $data['logo_attachment_id'] : null,
-            'payment_method' => in_array( $data['payment_method'] ?? 'stripe', [ 'stripe', 'bank_transfer', 'cash', 'other' ], true ) ? $data['payment_method'] : 'stripe',
+            'payment_method' => in_array( $data['payment_method'] ?? 'stripe', [ 'stripe', 'bank_transfer', 'cash', 'cheque', 'other' ], true ) ? $data['payment_method'] : 'stripe',
             'total_amount'   => number_format( max( 0.0, (float) ( $data['total_amount'] ?? 0 ) ), 2, '.', '' ),
             'payment_status' => 'pending',
             'refund_status'  => 'none',
@@ -173,16 +173,52 @@ class SponsorshipService {
         $before = (array) $this->get_by_id( $id );
 
         $update = [
-            'display_name' => sanitize_text_field( $data['display_name'] ?? (string) ( $before['display_name'] ?? '' ) ),
-            'sponsor_text' => sanitize_textarea_field( $data['sponsor_text'] ?? (string) ( $before['sponsor_text'] ?? '' ) ) ?: null,
+            'display_name'       => sanitize_text_field( $data['display_name'] ?? (string) ( $before['display_name'] ?? '' ) ),
+            'sponsor_text'       => sanitize_textarea_field( $data['sponsor_text'] ?? (string) ( $before['sponsor_text'] ?? '' ) ) ?: null,
             'logo_attachment_id' => ! empty( $data['logo_attachment_id'] ) ? (int) $data['logo_attachment_id'] : ( $before['logo_attachment_id'] ?? null ),
-            'updated_at'   => current_time( 'mysql', true ),
+            'logo_not_needed'    => isset( $data['logo_not_needed'] ) ? (int) (bool) $data['logo_not_needed'] : (int) (bool) ( $before['logo_not_needed'] ?? 0 ),
+            'updated_at'         => current_time( 'mysql', true ),
         ];
 
         $wpdb->update( $table, $update, [ 'id' => $id ] );
         $this->refresh_artwork_status( $id );
 
         Logger::log( 'sponsorship_artwork_updated', 'sponsorship', $id, $before, $update );
+    }
+
+    public function delete( int $id ): void {
+        global $wpdb;
+        $before = $this->get_by_id( $id );
+        if ( ! $before ) {
+            return;
+        }
+
+        // Release all shields back to available.
+        $items_table  = Schema::table_name( 'sponsorship_items' );
+        $shield_ids   = $wpdb->get_col( $wpdb->prepare(
+            "SELECT shield_id FROM {$items_table} WHERE sponsorship_id = %d",
+            $id
+        ) );
+        $shields_table = Schema::table_name( 'shields' );
+        foreach ( ( is_array( $shield_ids ) ? $shield_ids : [] ) as $shield_id ) {
+            $wpdb->update( $shields_table, [ 'physical_state' => 'available', 'updated_at' => current_time( 'mysql', true ) ], [ 'id' => (int) $shield_id ] );
+        }
+
+        $wpdb->delete( $items_table, [ 'sponsorship_id' => $id ] );
+        $wpdb->delete( Schema::table_name( 'upload_tokens' ), [ 'sponsorship_id' => $id ] );
+        $wpdb->delete( Schema::table_name( 'reservations' ), [ 'sponsorship_id' => $id ] );
+        $wpdb->delete( Schema::table_name( 'sponsorships' ), [ 'id' => $id ] );
+
+        Logger::log( 'sponsorship_deleted', 'sponsorship', $id, (array) $before, null );
+    }
+
+    public function mark_artwork_incomplete( int $id ): void {
+        global $wpdb;
+        $wpdb->update(
+            Schema::table_name( 'sponsorships' ),
+            [ 'artwork_status' => 'incomplete', 'updated_at' => current_time( 'mysql', true ) ],
+            [ 'id' => $id ]
+        );
     }
 
     public function refresh_artwork_status( int $id ): void {
@@ -195,7 +231,8 @@ class SponsorshipService {
         }
 
         $is_complete = (
-            ! empty( $sponsorship->display_name )
+            ! empty( $sponsorship->display_name ) &&
+            ( ! empty( $sponsorship->logo_attachment_id ) || ! empty( $sponsorship->logo_not_needed ) )
         );
 
         $status = $is_complete ? 'complete' : 'incomplete';

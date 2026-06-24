@@ -41,10 +41,16 @@ class ContactEditPage {
         }
 
         $contact_name  = (string) ( $contact->contact_name ?? '' );
-        $display_name  = (string) ( $contact->display_name ?? '' );
+        $company_name  = (string) ( $contact->company_name ?? '' );
         $email         = (string) ( $contact->email ?? '' );
         $phone         = (string) ( $contact->phone ?? '' );
         $website       = (string) ( $contact->website_url ?? '' );
+        $address1      = (string) ( $contact->address_line1 ?? '' );
+        $address2      = (string) ( $contact->address_line2 ?? '' );
+        $city          = (string) ( $contact->city ?? '' );
+        $county        = (string) ( $contact->county ?? '' );
+        $postcode      = (string) ( $contact->postcode ?? '' );
+        $country       = (string) ( $contact->country ?? 'UK' );
         $marketing     = ! empty( $contact->marketing_opt_in );
         $gdpr_status   = (string) ( $contact->gdpr_status ?? 'active' );
 
@@ -59,15 +65,31 @@ class ContactEditPage {
         echo '<table class="form-table">';
         $this->row( 'contact_name', __( 'Full name', 'battle-shield-sponsorship' ),
             '<input name="contact_name" id="contact_name" type="text" class="regular-text" required value="' . esc_attr( $contact_name ) . '" />' );
-        $this->row( 'display_name', __( 'Display name', 'battle-shield-sponsorship' ),
-            '<input name="display_name" id="display_name" type="text" class="regular-text" value="' . esc_attr( $display_name ) . '" />'
-            . '<p class="description">' . esc_html__( 'Name shown publicly on shields (defaults to full name if blank).', 'battle-shield-sponsorship' ) . '</p>' );
+        $this->row( 'company_name', __( 'Company name', 'battle-shield-sponsorship' ),
+            '<input name="company_name" id="company_name" type="text" class="regular-text" value="' . esc_attr( $company_name ) . '" />'
+            . '<p class="description">' . esc_html__( 'Organisation or business name shown publicly on shields.', 'battle-shield-sponsorship' ) . '</p>' );
         $this->row( 'email', __( 'Email', 'battle-shield-sponsorship' ),
             '<input name="email" id="email" type="email" class="regular-text" required value="' . esc_attr( $email ) . '" />' );
         $this->row( 'phone', __( 'Phone', 'battle-shield-sponsorship' ),
             '<input name="phone" id="phone" type="tel" class="regular-text" value="' . esc_attr( $phone ) . '" />' );
         $this->row( 'website_url', __( 'Website', 'battle-shield-sponsorship' ),
             '<input name="website_url" id="website_url" type="url" class="regular-text" value="' . esc_attr( $website ) . '" />' );
+
+        echo '<tr><td colspan="2"><h3 style="margin:0 0 4px;">' . esc_html__( 'Address', 'battle-shield-sponsorship' ) . '</h3>'
+            . '<p class="description" style="margin:0;">' . esc_html__( 'Optional — not required for sponsorship.', 'battle-shield-sponsorship' ) . '</p></td></tr>';
+        $this->row( 'address_line1', __( 'Address line 1', 'battle-shield-sponsorship' ),
+            '<input name="address_line1" id="address_line1" type="text" class="regular-text" value="' . esc_attr( $address1 ) . '" />' );
+        $this->row( 'address_line2', __( 'Address line 2', 'battle-shield-sponsorship' ),
+            '<input name="address_line2" id="address_line2" type="text" class="regular-text" value="' . esc_attr( $address2 ) . '" />' );
+        $this->row( 'city', __( 'City / Town', 'battle-shield-sponsorship' ),
+            '<input name="city" id="city" type="text" class="regular-text" value="' . esc_attr( $city ) . '" />' );
+        $this->row( 'county', __( 'County', 'battle-shield-sponsorship' ),
+            '<input name="county" id="county" type="text" class="regular-text" value="' . esc_attr( $county ) . '" />' );
+        $this->row( 'postcode', __( 'Postcode', 'battle-shield-sponsorship' ),
+            '<input name="postcode" id="postcode" type="text" style="width:120px;" value="' . esc_attr( $postcode ) . '" />' );
+        $this->row( 'country', __( 'Country', 'battle-shield-sponsorship' ),
+            '<input name="country" id="country" type="text" class="regular-text" value="' . esc_attr( $country ) . '" />' );
+
         $this->row( 'marketing_opt_in', __( 'Marketing opt-in', 'battle-shield-sponsorship' ),
             '<label><input name="marketing_opt_in" id="marketing_opt_in" type="checkbox" value="1" ' . checked( $marketing, true, false ) . ' /> '
             . esc_html__( 'Consented to marketing', 'battle-shield-sponsorship' ) . '</label>' );
@@ -108,10 +130,16 @@ class ContactEditPage {
 
         $data = [
             'contact_name'   => sanitize_text_field( wp_unslash( $_POST['contact_name'] ?? '' ) ),
-            'display_name'   => sanitize_text_field( wp_unslash( $_POST['display_name'] ?? '' ) ),
+            'company_name'   => sanitize_text_field( wp_unslash( $_POST['company_name'] ?? '' ) ),
             'email'          => sanitize_email( wp_unslash( $_POST['email'] ?? '' ) ),
             'phone'          => sanitize_text_field( wp_unslash( $_POST['phone'] ?? '' ) ),
             'website_url'    => esc_url_raw( wp_unslash( $_POST['website_url'] ?? '' ) ),
+            'address_line1'  => sanitize_text_field( wp_unslash( $_POST['address_line1'] ?? '' ) ),
+            'address_line2'  => sanitize_text_field( wp_unslash( $_POST['address_line2'] ?? '' ) ),
+            'city'           => sanitize_text_field( wp_unslash( $_POST['city'] ?? '' ) ),
+            'county'         => sanitize_text_field( wp_unslash( $_POST['county'] ?? '' ) ),
+            'postcode'       => sanitize_text_field( wp_unslash( $_POST['postcode'] ?? '' ) ),
+            'country'        => sanitize_text_field( wp_unslash( $_POST['country'] ?? '' ) ),
             'marketing_opt_in' => isset( $_POST['marketing_opt_in'] ) ? 1 : 0,
             'gdpr_status'    => sanitize_key( wp_unslash( $_POST['gdpr_status'] ?? 'active' ) ),
         ];

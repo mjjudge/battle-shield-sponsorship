@@ -35,7 +35,8 @@ class ContactService {
 
         if ( ! empty( $filters['search'] ) ) {
             $like     = '%' . $wpdb->esc_like( $filters['search'] ) . '%';
-            $wheres[] = '(contact_name LIKE %s OR display_name LIKE %s OR email LIKE %s)';
+            $wheres[] = '(contact_name LIKE %s OR company_name LIKE %s OR display_name LIKE %s OR email LIKE %s)';
+            $params[] = $like;
             $params[] = $like;
             $params[] = $like;
             $params[] = $like;
@@ -86,10 +87,17 @@ class ContactService {
         $opt_in = ! empty( $data['marketing_opt_in'] );
         $row    = [
             'contact_name'       => sanitize_text_field( $data['contact_name'] ?? '' ),
+            'company_name'       => sanitize_text_field( $data['company_name'] ?? $data['display_name'] ?? '' ),
             'display_name'       => sanitize_text_field( $data['display_name'] ?? '' ),
             'email'              => sanitize_email( $data['email'] ?? '' ),
             'phone'              => sanitize_text_field( $data['phone'] ?? '' ) ?: null,
             'website_url'        => esc_url_raw( $data['website_url'] ?? '' ) ?: null,
+            'address_line1'      => sanitize_text_field( $data['address_line1'] ?? '' ) ?: null,
+            'address_line2'      => sanitize_text_field( $data['address_line2'] ?? '' ) ?: null,
+            'city'               => sanitize_text_field( $data['city'] ?? '' ) ?: null,
+            'county'             => sanitize_text_field( $data['county'] ?? '' ) ?: null,
+            'postcode'           => sanitize_text_field( $data['postcode'] ?? '' ) ?: null,
+            'country'            => sanitize_text_field( $data['country'] ?? '' ) ?: null,
             'marketing_opt_in'   => $opt_in ? 1 : 0,
             'marketing_opt_in_at' => $opt_in ? $now : null,
             'gdpr_status'        => 'active',
@@ -117,10 +125,17 @@ class ContactService {
 
         $row = [
             'contact_name'       => sanitize_text_field( $data['contact_name'] ?? $before['contact_name'] ?? '' ),
+            'company_name'       => sanitize_text_field( $data['company_name'] ?? $before['company_name'] ?? '' ),
             'display_name'       => sanitize_text_field( $data['display_name'] ?? $before['display_name'] ?? '' ),
             'email'              => sanitize_email( $data['email'] ?? $before['email'] ?? '' ),
             'phone'              => sanitize_text_field( $data['phone'] ?? $before['phone'] ?? '' ) ?: null,
             'website_url'        => esc_url_raw( $data['website_url'] ?? $before['website_url'] ?? '' ) ?: null,
+            'address_line1'      => sanitize_text_field( $data['address_line1'] ?? $before['address_line1'] ?? '' ) ?: null,
+            'address_line2'      => sanitize_text_field( $data['address_line2'] ?? $before['address_line2'] ?? '' ) ?: null,
+            'city'               => sanitize_text_field( $data['city'] ?? $before['city'] ?? '' ) ?: null,
+            'county'             => sanitize_text_field( $data['county'] ?? $before['county'] ?? '' ) ?: null,
+            'postcode'           => sanitize_text_field( $data['postcode'] ?? $before['postcode'] ?? '' ) ?: null,
+            'country'            => sanitize_text_field( $data['country'] ?? $before['country'] ?? '' ) ?: null,
             'marketing_opt_in'   => $opt_in ? 1 : 0,
             'marketing_opt_in_at' => ( $opt_in && $opt_in_changed ) ? current_time( 'mysql', true ) : ( $before['marketing_opt_in_at'] ?? null ),
             'updated_at'         => current_time( 'mysql', true ),

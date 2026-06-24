@@ -45,7 +45,7 @@ class ManualSponsorshipPage {
         echo '<p>' . esc_html__( 'Record a sponsorship taken outside the online shop (e.g. phone, post, in-person). Payment is marked as complete immediately.', 'battle-shield-sponsorship' ) . '</p>';
 
         if ( empty( $campaigns ) ) {
-            echo '<p>' . esc_html__( 'No campaigns exist. Please create a campaign first.', 'battle-shield-sponsorship' ) . '</p></div>';
+            echo '<p>' . esc_html__( 'No events exist. Please create an event first.', 'battle-shield-sponsorship' ) . '</p></div>';
             return;
         }
 
@@ -55,7 +55,7 @@ class ManualSponsorshipPage {
 
         echo '<table class="form-table">';
 
-        echo '<tr><th><label for="campaign_id">' . esc_html__( 'Campaign', 'battle-shield-sponsorship' ) . '</label></th><td>';
+        echo '<tr><th><label for="campaign_id">' . esc_html__( 'Event', 'battle-shield-sponsorship' ) . '</label></th><td>';
         echo '<select name="campaign_id" id="campaign_id" required>';
         foreach ( $campaigns as $campaign ) {
             $sel = $active_campaign && (int) $active_campaign->id === (int) $campaign->id ? ' selected' : '';
@@ -102,7 +102,9 @@ class ManualSponsorshipPage {
                 $sid = (int) $shield->id;
                 echo '<tr>';
                 echo '<td style="padding:4px 8px;"><input type="checkbox" name="shield_ids[]" value="' . $sid . '" id="shield_' . $sid . '" /></td>';
-                echo '<td style="padding:4px 8px;"><label for="shield_' . $sid . '">' . esc_html( (string) $shield->name ) . ' (' . esc_html( ucfirst( (string) $shield->side ) ) . ')</label></td>';
+                $side_labels = [ 'royals' => 'Royals', 'rebels' => 'Rebels' ];
+                $side_label  = $side_labels[ (string) $shield->side ] ?? ucfirst( (string) $shield->side );
+                echo '<td style="padding:4px 8px;"><label for="shield_' . $sid . '">' . esc_html( (string) $shield->name ) . ' (' . esc_html( $side_label ) . ')</label></td>';
                 echo '<td style="padding:4px 8px;"><input type="number" name="shield_price[' . $sid . ']" step="0.01" min="0" class="small-text" value="' . esc_attr( number_format( (float) $shield->suggested_price, 2 ) ) . '" /></td>';
                 echo '</tr>';
             }

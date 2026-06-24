@@ -34,8 +34,8 @@ class Menu {
 
         add_submenu_page(
             self::TOP_SLUG,
-            __( 'Campaigns', 'battle-shield-sponsorship' ),
-            __( 'Campaigns', 'battle-shield-sponsorship' ),
+            __( 'Events', 'battle-shield-sponsorship' ),
+            __( 'Events', 'battle-shield-sponsorship' ),
             'bss_manage_campaigns',
             'bss-campaigns',
             [ new CampaignListPage(), 'render' ]
@@ -43,8 +43,8 @@ class Menu {
 
         add_submenu_page(
             self::TOP_SLUG,
-            __( 'Campaign Editor', 'battle-shield-sponsorship' ),
-            __( 'Campaign Editor', 'battle-shield-sponsorship' ),
+            __( 'Event Editor', 'battle-shield-sponsorship' ),
+            __( 'Event Editor', 'battle-shield-sponsorship' ),
             'bss_manage_campaigns',
             'bss-campaign-edit',
             [ new CampaignEditPage(), 'render' ]
@@ -66,6 +66,16 @@ class Menu {
             'bss_manage_shields',
             'bss-shield-edit',
             [ new ShieldEditPage(), 'render' ]
+        );
+
+        // Hidden from nav — accessible via the Shields list "Import" button.
+        add_submenu_page(
+            null,
+            __( 'Import Shields', 'battle-shield-sponsorship' ),
+            __( 'Import Shields', 'battle-shield-sponsorship' ),
+            'bss_manage_shields',
+            'bss-shield-import',
+            [ new ShieldImportPage(), 'render' ]
         );
 
         add_submenu_page(

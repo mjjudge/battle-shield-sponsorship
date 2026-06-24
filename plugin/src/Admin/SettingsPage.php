@@ -52,10 +52,11 @@ class SettingsPage {
 
         echo '<tr><th><label for="stripe_mode">' . esc_html__( 'Mode', 'battle-shield-sponsorship' ) . '</label></th><td>';
         echo '<select name="stripe_mode" id="stripe_mode">';
-        echo '<option value="test" ' . selected( $stripe_mode, 'test', false ) . '>' . esc_html__( 'Test', 'battle-shield-sponsorship' ) . '</option>';
+        echo '<option value="test_no_stripe" ' . selected( $stripe_mode, 'test_no_stripe', false ) . '>' . esc_html__( 'Test – No Stripe', 'battle-shield-sponsorship' ) . '</option>';
+        echo '<option value="test" ' . selected( $stripe_mode, 'test', false ) . '>' . esc_html__( 'Test – Stripe', 'battle-shield-sponsorship' ) . '</option>';
         echo '<option value="live" ' . selected( $stripe_mode, 'live', false ) . '>' . esc_html__( 'Live', 'battle-shield-sponsorship' ) . '</option>';
         echo '</select>';
-        echo '<p class="description">' . esc_html__( 'Use test mode during development.', 'battle-shield-sponsorship' ) . '</p>';
+        echo '<p class="description">' . esc_html__( 'Test – No Stripe: bypass Stripe entirely, payments confirmed automatically (for workflow testing). Test – Stripe: use Stripe test keys. Live: real payments.', 'battle-shield-sponsorship' ) . '</p>';
         echo '</td></tr>';
 
         $this->row( 'stripe_publishable_key_test', __( 'Test publishable key', 'battle-shield-sponsorship' ),
@@ -113,7 +114,7 @@ class SettingsPage {
 
         $current  = (array) get_option( self::OPTION_KEY, [] );
         $new_data = [
-            'stripe_mode'                  => sanitize_key( wp_unslash( $_POST['stripe_mode'] ?? 'test' ) ),
+            'stripe_mode'                  => in_array( wp_unslash( $_POST['stripe_mode'] ?? '' ), [ 'test_no_stripe', 'test', 'live' ], true ) ? wp_unslash( $_POST['stripe_mode'] ) : 'test_no_stripe',
             'stripe_publishable_key_test'  => sanitize_text_field( wp_unslash( $_POST['stripe_publishable_key_test'] ?? '' ) ),
             'stripe_secret_key_test'       => sanitize_text_field( wp_unslash( $_POST['stripe_secret_key_test'] ?? '' ) ),
             'stripe_webhook_secret_test'   => sanitize_text_field( wp_unslash( $_POST['stripe_webhook_secret_test'] ?? '' ) ),

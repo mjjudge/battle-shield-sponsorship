@@ -119,17 +119,30 @@ class ShieldService {
         return $counts;
     }
 
+    public function find_by_name_and_side( string $name, string $side ): ?object {
+        global $wpdb;
+        $table = Schema::table_name( 'shields' );
+        $row   = $wpdb->get_row( $wpdb->prepare(
+            "SELECT * FROM {$table} WHERE name = %s AND side = %s LIMIT 1",
+            $name,
+            $side
+        ) );
+        return $row ?: null;
+    }
+
     /** @param array<string, mixed> $data
      *  @return array<string, mixed>
      */
     private function sanitize_shield_data( array $data ): array {
-        $valid_sides   = [ 'baron', 'royalist', 'other' ];
-        $valid_states  = [ 'available', 'reserved', 'sponsored', 'unavailable' ];
+        $valid_sides  = [ 'royals', 'rebels', 'baron', 'royalist', 'other' ];
+        $valid_states = [ 'available', 'reserved', 'sponsored', 'unavailable' ];
 
         return [
             'name'           => sanitize_text_field( $data['name'] ?? '' ),
-            'side'           => in_array( $data['side'] ?? '', $valid_sides, true ) ? $data['side'] : 'baron',
+            'side'           => in_array( $data['side'] ?? '', $valid_sides, true ) ? $data['side'] : 'royals',
             'description'    => sanitize_textarea_field( $data['description'] ?? '' ),
+            'birth_date'     => sanitize_text_field( $data['birth_date'] ?? '' ) ?: null,
+            'death_date'     => sanitize_text_field( $data['death_date'] ?? '' ) ?: null,
             'suggested_price' => number_format( max( 0.0, (float) ( $data['suggested_price'] ?? 0 ) ), 2, '.', '' ),
             'image_id'       => ! empty( $data['image_id'] ) ? (int) $data['image_id'] : null,
             'physical_state' => in_array( $data['physical_state'] ?? '', $valid_states, true ) ? $data['physical_state'] : 'available',

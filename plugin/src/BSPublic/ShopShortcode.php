@@ -114,6 +114,17 @@ class ShopShortcode {
         echo '<input type="hidden" name="session_key" value="' . esc_attr( $session_key ) . '" />';
         wp_nonce_field( self::NONCE_CHECKOUT );
 
+        echo '<div class="bss-form-row">';
+        echo '<label for="bss_contact_name">' . esc_html__( 'Your full name', 'battle-shield-sponsorship' ) . '</label>';
+        echo '<input type="text" name="contact_name" id="bss_contact_name" class="bss-input" required />';
+        echo '</div>';
+
+        echo '<div class="bss-form-row">';
+        echo '<label for="bss_contact_email">' . esc_html__( 'Your email address', 'battle-shield-sponsorship' ) . '</label>';
+        echo '<input type="email" name="contact_email" id="bss_contact_email" class="bss-input" required />';
+        echo '<p class="bss-hint">' . esc_html__( 'We will send your artwork upload link to this address.', 'battle-shield-sponsorship' ) . '</p>';
+        echo '</div>';
+
         if ( (int) $campaign->gift_aid_enabled ) {
             echo '<label class="bss-gift-aid">';
             echo '<input type="checkbox" name="gift_aid_declared" value="1" /> ';

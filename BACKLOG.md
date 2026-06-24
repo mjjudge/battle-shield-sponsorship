@@ -2,10 +2,10 @@ BACKLOG.md
 Battle Shield Sponsorship Plugin
 Project Status
 Status	Count
-Not Started	0
+Not Started	1
 In Progress	0
 Blocked	0
-Complete	50
+Complete	74
 
 Backlog Management Rules
 These rules are mandatory.
@@ -65,6 +65,203 @@ BLOCKED
 None
 
 COMPLETE
+
+Post-Test Fixes (v0.1.x)
+BSS-130 Fix manual sponsorship: £0 amount and no linked shields
+Priority: Critical
+Completed: 2026-06-23
+Acceptance Criteria:
+    • ManualSponsorshipService reads per-shield prices from the shields array the page sends ✓
+    • total_amount calculated correctly from individual shield prices ✓
+    • Shield items linked to the sponsorship ✓
+    • Shields gain 'sponsored' status after creation ✓
+    • Amount shows correctly in Sponsorships list ✓
+
+BSS-131 Rename "Campaign" to "Event" throughout admin UI
+Priority: High
+Completed: 2026-06-23
+Acceptance Criteria:
+    • Menu shows "Events" / "Event Editor" ✓
+    • All page titles, headings, buttons, notices use "Event" not "Campaign" ✓
+
+BSS-132 Split event_date into event_start_date / event_end_date
+Priority: High
+Completed: 2026-06-23
+Acceptance Criteria:
+    • DB migration 0.1.0 adds event_start_date and event_end_date columns ✓
+    • Event Editor shows "Event start" and "Event end" date fields ✓
+    • Events list shows date range ✓
+
+BSS-133 Rename "Sales open date" to "Sponsorship opens"
+Priority: High
+Completed: 2026-06-23
+Acceptance Criteria:
+    • Label in Event Editor reads "Sponsorship opens" ✓
+
+BSS-134 Default price per shield £100.00, no spinner on price input
+Priority: Medium
+Completed: 2026-06-23
+Acceptance Criteria:
+    • New event form pre-fills default price with 100.00 ✓
+    • Price input has no up/down incrementor arrows ✓
+
+BSS-135 Rename shield sides to Royals / Rebels, remove Other
+Priority: High
+Completed: 2026-06-23
+Acceptance Criteria:
+    • DB migration 0.1.1 updates existing rows ✓
+    • Shield editor dropdown shows Royals / Rebels only ✓
+    • Shield list filter shows Royals / Rebels only ✓
+    • Manual sponsorship page shows Royals / Rebels labels ✓
+
+BSS-136 Shield image portrait rectangle display
+Priority: Medium
+Completed: 2026-06-23
+Acceptance Criteria:
+    • Shield image placeholder is portrait-oriented (150×225 px viewport) ✓
+    • Image is not cropped at top/bottom in the editor preview ✓
+
+BSS-137 Add "Test No Stripe" payment mode
+Priority: High
+Completed: 2026-06-23
+Acceptance Criteria:
+    • Settings Mode dropdown has three options: Test No Stripe / Test Stripe / Live ✓
+    • In Test No Stripe mode checkout bypasses Stripe entirely ✓
+    • Success page auto-confirms payment when mode is Test No Stripe ✓
+
+BSS-138 Add address fields and rename Display name to Company name
+Priority: Medium
+Completed: 2026-06-23
+Acceptance Criteria:
+    • DB migration 0.1.2 adds company_name column and address columns ✓
+    • Contact editor shows Company name field ✓
+    • Address fields: line 1, line 2, city, county, postcode, country (all optional) ✓
+
+BSS-139 Update Help page for new terminology and page requirements
+Priority: Medium
+Completed: 2026-06-23
+Acceptance Criteria:
+    • Help page uses "Events" not "Campaigns" ✓
+    • Help page references Royals / Rebels ✓
+    • Help page lists all four WordPress pages required with current slugs ✓
+    • Help page explains all three payment modes ✓
+
+Shield Data Import (v0.1.x)
+BSS-140 Add birth/death fields to shields table and editor
+Priority: High
+Completed: 2026-06-23
+Acceptance Criteria:
+    • DB migration adds birth_date, death_date columns ✓
+    • Shield editor shows Born and Died fields ✓
+    • ShieldService persists and updates the new fields ✓
+
+BSS-141 Build shields JSON import tool
+Priority: High
+Completed: 2026-06-23
+Acceptance Criteria:
+    • Admin page reads shields_import.json ✓
+    • Creates shield records for all 47 entries (skips existing name+side matches) ✓
+    • Maps side "Royal" → royals, "Rebel" → rebels ✓
+    • Cleans "We are trying to find…" bio/date placeholders to blank ✓
+    • Sideloads each shield's image into WP media library ✓
+    • Links attachment ID to shield record ✓
+    • Reports created/skipped/image-imported counts ✓
+
+BSS-142 Create enhanced shields_import.json with explicit image mappings
+Priority: High
+Completed: 2026-06-23
+Acceptance Criteria:
+    • All 47 shields have correct side mapping ✓
+    • image_file field contains relative path (royals/ or rebels/ prefix) or null ✓
+    • Prince Edward → Shield_Edward_copy image, not Edward_I_of_England ✓
+    • Adam de Everingham appears as two entries (Royal + Rebel) ✓
+    • Geoffrey de Geneville correctly maps to Geoffrey_de_Granville image file ✓
+
+BSS-143 Fix Events list empty after creating a new Event (migration version stamp bug)
+Priority: Critical
+Completed: 2026-06-24
+Acceptance Criteria:
+    • BSS_VERSION bumped from 0.1.0 to 0.1.5 so migrator re-runs ✓
+    • Migration keys for AddEventDatesToCampaigns through SetDefaultShieldPrice shifted to 0.1.1–0.1.5 ✓
+    • event_start_date and event_end_date columns present in bss_campaigns ✓
+    • New events appear in the Events list immediately after creation ✓
+
+BSS-144 Fix "No campaigns exist" text in Add Manual Sponsorship page
+Priority: Medium
+Completed: 2026-06-24
+Acceptance Criteria:
+    • Empty-state message reads "No events exist. Please create an event first." ✓
+    • Event dropdown label updated from "Campaign" to "Event" ✓
+
+BSS-145 Public shield catalogue — show biography, born, and died
+Priority: Medium
+Status: NOT STARTED
+Acceptance Criteria:
+    • Biography (description) displayed on the public-facing shield detail/catalogue page
+    • Born and Died dates shown when present
+    • Matches the existing shield catalogue design
+
+BSS-146 Manual sponsorships enter the same artwork reminder workflow as online sponsorships
+Priority: High
+Completed: 2026-06-24
+Acceptance Criteria:
+    • artwork_status reset to 'incomplete' after manual creation regardless of admin-set display_name ✓
+    • Upload token created before mark_paid() so the confirmation email includes the upload link ✓
+    • SponsorConfirmationNotifier sends sponsorship_confirmation email on bss_payment_confirmed ✓
+    • SponsorConfirmationNotifier creates an upload token for online Stripe sponsorships too (fixes latent gap) ✓
+    • Daily cron picks up manual sponsorships with artwork_status='incomplete' and sends reminders ✓
+    • Artwork marked complete only when the sponsor submits the upload form ✓
+
+BSS-147 Artwork status requires both display name and logo (or explicit logo waiver)
+Priority: High
+Completed: 2026-06-24
+Acceptance Criteria:
+    • refresh_artwork_status() marks complete only when display_name non-empty AND (logo present OR logo_not_needed set) ✓
+    • logo_not_needed boolean column added to bss_sponsorships via migration 0.1.6 ✓
+    • Admin can tick "No logo required" on the sponsorship view page ✓
+    • Sponsor can tick "I do not plan to upload a logo or image for the back of the shield" on upload page ✓
+    • Ticking either waiver re-evaluates artwork_status immediately ✓
+    • Sponsor upload page shows a status summary of what is still outstanding ✓
+    • Admin view shows note when sponsor has waived the logo ✓
+
+BSS-148 Artwork reminder emails state what is specifically outstanding
+Priority: High
+Completed: 2026-06-24
+Acceptance Criteria:
+    • Reminder email body includes {outstanding_items} — bulleted list of what's missing ✓
+    • {print_warning} tag appears when display name is absent, flagging that printing is blocked ✓
+    • Default artwork_reminder and final_artwork_reminder templates updated to use these tags ✓
+    • Admins can override template text via Email Templates page ✓
+
+BSS-149 Online checkout collects contact name and email
+Priority: High
+Completed: 2026-06-24
+Acceptance Criteria:
+    • Basket/checkout form includes required contact_name and contact_email fields ✓
+    • Contact record created at checkout; sponsorship linked to contact ✓
+    • Confirmation email can now be sent to online sponsors ✓
+    • Hint text explains the email is used for the artwork upload link ✓
+
+BSS-150 Fix artwork status showing Complete when logo is missing (stale cached value)
+Priority: Critical
+Completed: 2026-06-24
+Acceptance Criteria:
+    • Migration 0.1.7 (RecalculateArtworkStatus) resets artwork_status to 'incomplete' for any paid sponsorship where display_name is blank or logo is absent and logo_not_needed = 0 ✓
+    • BSS_VERSION bumped to 0.1.7 so migration runs on next admin page load ✓
+
+BSS-151 Sponsorship list — remove ID column, sort alphabetically, add delete
+Priority: Medium
+Completed: 2026-06-24
+Acceptance Criteria:
+    • ID column removed from sponsorship list ✓
+    • List sorted alphabetically by Sponsor display name; blank display names sort last ✓
+    • Delete action available in list Actions column ✓
+    • Delete action available on sponsorship view page ✓
+    • Delete requires JS confirmation before proceeding ✓
+    • All shields released back to 'available' on delete ✓
+    • Sponsorship items, upload tokens, and reservations cleaned up on delete ✓
+    • Success notice shown after deletion ✓
+    • SponsorshipService.delete() handles all cleanup; action protected by per-ID nonce ✓
 
 Email
 BSS-072 Treasurer notification email

@@ -59,6 +59,9 @@ class SponsorshipViewPage {
         $this->detail_row( __( 'Payment method', 'battle-shield-sponsorship' ), ucfirst( str_replace( '_', ' ', (string) $sponsorship->payment_method ) ) );
         $this->detail_row( __( 'Payment status', 'battle-shield-sponsorship' ), ucfirst( (string) $sponsorship->payment_status ) );
         $this->detail_row( __( 'Artwork status', 'battle-shield-sponsorship' ), ucfirst( (string) $sponsorship->artwork_status ) );
+        if ( ! empty( $sponsorship->logo_not_needed ) ) {
+            $this->detail_row( __( 'Logo', 'battle-shield-sponsorship' ), __( 'Sponsor indicated no logo will be provided', 'battle-shield-sponsorship' ) );
+        }
         $this->detail_row( __( 'Gift Aid declared', 'battle-shield-sponsorship' ), (int) $sponsorship->gift_aid_declared ? 'Yes' : 'No' );
         $this->detail_row( __( 'Created', 'battle-shield-sponsorship' ), date( 'd/m/Y H:i', strtotime( (string) $sponsorship->created_at ) ) );
         if ( $edit_url ) {
@@ -108,16 +111,30 @@ class SponsorshipViewPage {
             echo '<input type="hidden" name="logo_attachment_id" id="bss-logo-id" value="' . esc_attr( (string) $logo_id ) . '" />';
             echo '<button type="button" class="button" id="bss-select-logo">' . esc_html__( 'Select logo', 'battle-shield-sponsorship' ) . '</button>';
             echo '</td></tr>';
+
+            echo '<tr><th>' . esc_html__( 'No logo required', 'battle-shield-sponsorship' ) . '</th><td>';
+            echo '<input type="hidden" name="logo_not_needed" value="0" />';
+            echo '<label><input type="checkbox" name="logo_not_needed" value="1" ' . checked( ! empty( $sponsorship->logo_not_needed ), true, false ) . ' /> ';
+            echo esc_html__( 'I do not plan to upload a logo or image for the back of the shield', 'battle-shield-sponsorship' ) . '</label>';
+            echo '</td></tr>';
+
             echo '</table>';
 
             submit_button( __( 'Update Artwork', 'battle-shield-sponsorship' ) );
             echo '</form>';
 
+            echo '<h2>' . esc_html__( 'Actions', 'battle-shield-sponsorship' ) . '</h2>';
             if ( current_user_can( 'bss_process_refunds' ) ) {
-                echo '<h2>' . esc_html__( 'Actions', 'battle-shield-sponsorship' ) . '</h2>';
                 echo '<p><a class="button" href="' . esc_url( admin_url( 'admin.php?page=bss-refunds&sponsorship_id=' . $id ) ) . '">'
                     . esc_html__( 'Process Refund', 'battle-shield-sponsorship' ) . '</a></p>';
             }
+            $confirm_msg = esc_js( __( 'Permanently delete this sponsorship? The sponsored shields will be released back to available. This cannot be undone.', 'battle-shield-sponsorship' ) );
+            echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" onsubmit="return confirm(\'' . $confirm_msg . '\')" style="margin-top:8px;">';
+            echo '<input type="hidden" name="action" value="bss_delete_sponsorship" />';
+            echo '<input type="hidden" name="sponsorship_id" value="' . $id . '" />';
+            echo '<input type="hidden" name="_wpnonce" value="' . esc_attr( wp_create_nonce( 'bss_delete_sponsorship_' . $id ) ) . '" />';
+            echo '<button type="submit" class="button" style="color:#c62828;border-color:#c62828;">' . esc_html__( 'Delete Sponsorship', 'battle-shield-sponsorship' ) . '</button>';
+            echo '</form>';
         }
 
         echo '</div>';
@@ -152,6 +169,7 @@ class SponsorshipViewPage {
                 'display_name'       => sanitize_text_field( wp_unslash( $_POST['display_name'] ?? '' ) ),
                 'sponsor_text'       => sanitize_textarea_field( wp_unslash( $_POST['sponsor_text'] ?? '' ) ),
                 'logo_attachment_id' => (int) ( $_POST['logo_attachment_id'] ?? 0 ) ?: null,
+                'logo_not_needed'    => (int) ( $_POST['logo_not_needed'] ?? 0 ),
             ] );
         }
 

@@ -53,8 +53,10 @@ class Plugin {
         new \BattleShieldSponsorship\Admin\ReportingPage();
         new \BattleShieldSponsorship\Admin\EmailTemplatesPage();
         new \BattleShieldSponsorship\Admin\SettingsPage();
+        new \BattleShieldSponsorship\Admin\ShieldImportPage();
 
         new \BattleShieldSponsorship\Admin\CampaignListPage();
+        new \BattleShieldSponsorship\Admin\SponsorshipListPage();
     }
 
     private function register_rest(): void {
@@ -78,6 +80,7 @@ class Plugin {
     private function register_event_hooks(): void {
         add_action( 'bss_payment_confirmed', static function ( int $sponsorship_id ): void {
             ( new \BattleShieldSponsorship\Mail\TreasurerNotifier() )->send( $sponsorship_id );
+            ( new \BattleShieldSponsorship\Mail\SponsorConfirmationNotifier() )->send( $sponsorship_id );
         } );
     }
 }

@@ -23,6 +23,13 @@ class Migrator {
         '0.0.7' => Migrations\CreateUploadTokensTable::class,
         '0.0.8' => Migrations\CreateEmailLogTable::class,
         '0.0.9' => Migrations\CreateAuditLogTable::class,
+        '0.1.1' => Migrations\AddEventDatesToCampaigns::class,
+        '0.1.2' => Migrations\UpdateShieldSides::class,
+        '0.1.3' => Migrations\AddContactCompanyAndAddress::class,
+        '0.1.4' => Migrations\AddShieldBiographyFields::class,
+        '0.1.5' => Migrations\SetDefaultShieldPrice::class,
+        '0.1.6' => Migrations\AddLogoNotNeededToSponsorships::class,
+        '0.1.7' => Migrations\RecalculateArtworkStatus::class,
     ];
 
     public function run(): void {

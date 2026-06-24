@@ -62,14 +62,30 @@ class ReminderService {
                 $items     = $sponsorship_service->get_items( $sponsorship_id );
                 $shields   = array_map( fn( $item ) => (string) ( ( new ShieldService() )->get_by_id( (int) $item->shield_id )->name ?? '' ), $items );
 
+                // Build outstanding items list for the email.
+                $outstanding   = [];
+                $print_warning = '';
+                if ( empty( $sponsorship->display_name ) ) {
+                    $outstanding[]  = __( 'Sponsor display name (required — patch cannot be printed without this)', 'battle-shield-sponsorship' );
+                    $print_warning  = '<p><strong>' . esc_html__( 'Important: your patch cannot be printed until a sponsor display name is provided.', 'battle-shield-sponsorship' ) . '</strong></p>';
+                }
+                if ( empty( $sponsorship->logo_attachment_id ) && empty( $sponsorship->logo_not_needed ) ) {
+                    $outstanding[] = __( 'Logo or image for the back of the shield', 'battle-shield-sponsorship' );
+                }
+                $outstanding_items = $outstanding
+                    ? '<ul>' . implode( '', array_map( fn( $s ) => '<li>' . esc_html( $s ) . '</li>', $outstanding ) ) . '</ul>'
+                    : '';
+
                 $data = [
-                    'sponsor_name'    => (string) $contact->contact_name,
-                    'display_name'    => (string) $sponsorship->display_name,
-                    'campaign_name'   => (string) $campaign->name,
-                    'cutoff_date'     => $cutoff_date ? date( 'd/m/Y', strtotime( $cutoff_date ) ) : '',
-                    'shield_names'    => implode( ', ', array_filter( $shields ) ),
-                    'edit_url'        => $edit_url,
-                    'is_final'        => $is_final_reminder_day,
+                    'sponsor_name'      => (string) $contact->contact_name,
+                    'display_name'      => (string) $sponsorship->display_name,
+                    'campaign_name'     => (string) $campaign->name,
+                    'cutoff_date'       => $cutoff_date ? date( 'd/m/Y', strtotime( $cutoff_date ) ) : '',
+                    'shield_names'      => implode( ', ', array_filter( $shields ) ),
+                    'edit_url'          => $edit_url,
+                    'is_final'          => $is_final_reminder_day,
+                    'outstanding_items' => $outstanding_items,
+                    'print_warning'     => $print_warning,
                 ];
 
                 $type    = $is_final_reminder_day ? 'final_artwork_reminder' : 'artwork_reminder';

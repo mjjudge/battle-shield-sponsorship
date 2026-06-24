@@ -13,7 +13,7 @@ class CampaignService {
         global $wpdb;
         $table = Schema::table_name( 'campaigns' );
         $row   = $wpdb->get_row(
-            $wpdb->prepare( "SELECT * FROM {$table} WHERE status = %s ORDER BY event_date DESC LIMIT 1", 'active' )
+            $wpdb->prepare( "SELECT * FROM {$table} WHERE status = %s ORDER BY event_start_date DESC, event_date DESC LIMIT 1", 'active' )
         );
         return $row ?: null;
     }
@@ -29,7 +29,7 @@ class CampaignService {
     public function get_all(): array {
         global $wpdb;
         $table = Schema::table_name( 'campaigns' );
-        $rows  = $wpdb->get_results( "SELECT * FROM {$table} ORDER BY event_date DESC" );
+        $rows  = $wpdb->get_results( "SELECT * FROM {$table} ORDER BY event_start_date DESC, event_date DESC" );
         return is_array( $rows ) ? $rows : [];
     }
 
@@ -41,6 +41,8 @@ class CampaignService {
 
         $row = [
             'name'                      => sanitize_text_field( $data['name'] ?? '' ),
+            'event_start_date'          => sanitize_text_field( $data['event_start_date'] ?? '' ) ?: null,
+            'event_end_date'            => sanitize_text_field( $data['event_end_date'] ?? '' ) ?: null,
             'event_date'                => sanitize_text_field( $data['event_date'] ?? '' ) ?: null,
             'sales_open_date'           => sanitize_text_field( $data['sales_open_date'] ?? '' ) ?: null,
             'artwork_cutoff_date'       => sanitize_text_field( $data['artwork_cutoff_date'] ?? '' ) ?: null,
@@ -70,6 +72,8 @@ class CampaignService {
 
         $row = [
             'name'                      => sanitize_text_field( $data['name'] ?? $before['name'] ?? '' ),
+            'event_start_date'          => sanitize_text_field( $data['event_start_date'] ?? $before['event_start_date'] ?? '' ) ?: null,
+            'event_end_date'            => sanitize_text_field( $data['event_end_date'] ?? $before['event_end_date'] ?? '' ) ?: null,
             'event_date'                => sanitize_text_field( $data['event_date'] ?? $before['event_date'] ?? '' ) ?: null,
             'sales_open_date'           => sanitize_text_field( $data['sales_open_date'] ?? $before['sales_open_date'] ?? '' ) ?: null,
             'artwork_cutoff_date'       => sanitize_text_field( $data['artwork_cutoff_date'] ?? $before['artwork_cutoff_date'] ?? '' ) ?: null,

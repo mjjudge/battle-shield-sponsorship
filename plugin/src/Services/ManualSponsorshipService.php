@@ -33,9 +33,14 @@ class ManualSponsorshipService {
             'marketing_opt_in' => $data['marketing_opt_in'] ?? false,
         ] );
 
-        $shield_ids = array_filter( array_map( 'intval', (array) ( $data['shield_ids'] ?? [] ) ) );
-        $price_each = (float) ( $data['price_each'] ?? 0 );
-        $total      = $price_each * count( $shield_ids );
+        // Accepts: shields => [ ['shield_id' => int, 'price_paid' => float], ... ]
+        $shields = array_filter( (array) ( $data['shields'] ?? [] ), fn( $s ) => ! empty( $s['shield_id'] ) );
+        $total   = array_sum( array_column( $shields, 'price_paid' ) );
+
+        $allowed_methods = [ 'stripe', 'bank_transfer', 'cash', 'cheque', 'other' ];
+        $payment_method  = in_array( $data['payment_method'] ?? 'cash', $allowed_methods, true )
+            ? $data['payment_method']
+            : 'cash';
 
         $sponsorship_id = $sponsorship_service->create_pending( [
             'campaign_id'    => (int) ( $data['campaign_id'] ?? 0 ),
@@ -43,24 +48,29 @@ class ManualSponsorshipService {
             'display_name'   => $data['display_name'] ?? '',
             'sponsor_text'   => $data['sponsor_text'] ?? '',
             'logo_attachment_id' => $data['logo_attachment_id'] ?? null,
-            'payment_method' => $data['payment_method'] ?? 'cash',
+            'payment_method' => $payment_method,
             'total_amount'   => $total,
             'gift_aid_declared' => $data['gift_aid_declared'] ?? false,
         ] );
 
-        foreach ( $shield_ids as $shield_id ) {
-            $sponsorship_service->add_item( $sponsorship_id, $shield_id, $price_each );
+        foreach ( $shields as $item ) {
+            $sponsorship_service->add_item( $sponsorship_id, (int) $item['shield_id'], (float) ( $item['price_paid'] ?? 0 ) );
         }
 
-        $sponsorship_service->mark_paid( $sponsorship_id );
-        $sponsorship_service->refresh_artwork_status( $sponsorship_id );
-
+        // Create the token before mark_paid so the bss_payment_confirmed hook
+        // (SponsorConfirmationNotifier) finds it and includes the upload link in the email.
         $upload_token_service->create_for_sponsorship( $sponsorship_id );
+
+        $sponsorship_service->mark_paid( $sponsorship_id );
+
+        // Admin-set display_name must not suppress the sponsor artwork reminder workflow.
+        $sponsorship_service->mark_artwork_incomplete( $sponsorship_id );
 
         Logger::log( 'manual_sponsorship_created', 'sponsorship', $sponsorship_id, null, [
             'contact_id'     => $contact_id,
-            'shield_count'   => count( $shield_ids ),
-            'payment_method' => $data['payment_method'] ?? 'cash',
+            'shield_count'   => count( $shields ),
+            'payment_method' => $payment_method,
+            'total_amount'   => $total,
         ] );
 
         return [

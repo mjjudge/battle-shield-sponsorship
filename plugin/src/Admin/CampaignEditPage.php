@@ -22,21 +22,24 @@ class CampaignEditPage {
         $service  = new CampaignService();
         $campaign = $id > 0 ? $service->get_by_id( $id ) : null;
 
-        $name          = (string) ( $campaign->name ?? '' );
-        $event_date    = (string) ( $campaign->event_date ?? '' );
-        $sales_open    = (string) ( $campaign->sales_open_date ?? '' );
+        $name             = (string) ( $campaign->name ?? '' );
+        $event_start_date = (string) ( $campaign->event_start_date ?? '' );
+        $event_end_date   = (string) ( $campaign->event_end_date ?? '' );
+        $event_date       = (string) ( $campaign->event_date ?? '' ); // legacy fallback
+        $sales_open       = (string) ( $campaign->sales_open_date ?? '' );
         $cutoff        = (string) ( $campaign->artwork_cutoff_date ?? '' );
         $freq_days     = (int) ( $campaign->reminder_frequency_days ?? 2 );
         $final_days    = (int) ( $campaign->final_reminder_days_before ?? 1 );
-        $default_price = number_format( (float) ( $campaign->default_price ?? 0 ), 2 );
+        $default_price = number_format( (float) ( $campaign->default_price ?? 100 ), 2 );
         $timeout       = (int) ( $campaign->reservation_timeout_minutes ?? 30 );
         $gift_aid      = ! empty( $campaign->gift_aid_enabled );
         $status        = (string) ( $campaign->status ?? 'inactive' );
 
-        $title = $id > 0 ? __( 'Edit Campaign', 'battle-shield-sponsorship' ) : __( 'New Campaign', 'battle-shield-sponsorship' );
+        $title = $id > 0 ? __( 'Edit Event', 'battle-shield-sponsorship' ) : __( 'New Event', 'battle-shield-sponsorship' );
 
         echo '<div class="wrap">';
         echo '<h1>' . esc_html( $title ) . '</h1>';
+        echo '<style>input.bss-no-spinner::-webkit-outer-spin-button,input.bss-no-spinner::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}input.bss-no-spinner{-moz-appearance:textfield}</style>';
 
         echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
         echo '<input type="hidden" name="action" value="bss_save_campaign" />';
@@ -44,16 +47,18 @@ class CampaignEditPage {
         wp_nonce_field( self::NONCE_ACTION );
 
         echo '<table class="form-table" role="presentation">';
-        $this->row( 'name', __( 'Campaign name', 'battle-shield-sponsorship' ),
+        $this->row( 'name', __( 'Event name', 'battle-shield-sponsorship' ),
             '<input name="name" id="name" type="text" class="regular-text" required value="' . esc_attr( $name ) . '" />' );
-        $this->row( 'event_date', __( 'Event date', 'battle-shield-sponsorship' ),
-            '<input name="event_date" id="event_date" type="date" value="' . esc_attr( $event_date ) . '" />' );
-        $this->row( 'sales_open_date', __( 'Sales open date', 'battle-shield-sponsorship' ),
+        $this->row( 'event_start_date', __( 'Event start', 'battle-shield-sponsorship' ),
+            '<input name="event_start_date" id="event_start_date" type="date" value="' . esc_attr( $event_start_date ) . '" />' );
+        $this->row( 'event_end_date', __( 'Event end', 'battle-shield-sponsorship' ),
+            '<input name="event_end_date" id="event_end_date" type="date" value="' . esc_attr( $event_end_date ) . '" />' );
+        $this->row( 'sales_open_date', __( 'Sponsorship opens', 'battle-shield-sponsorship' ),
             '<input name="sales_open_date" id="sales_open_date" type="date" value="' . esc_attr( $sales_open ) . '" />' );
         $this->row( 'artwork_cutoff_date', __( 'Artwork cut-off date', 'battle-shield-sponsorship' ),
             '<input name="artwork_cutoff_date" id="artwork_cutoff_date" type="date" value="' . esc_attr( $cutoff ) . '" />' );
         $this->row( 'default_price', __( 'Default price per shield (£)', 'battle-shield-sponsorship' ),
-            '<input name="default_price" id="default_price" type="number" step="0.01" min="0" class="small-text" value="' . esc_attr( $default_price ) . '" />' );
+            '<input name="default_price" id="default_price" type="number" step="0.01" min="0" class="small-text bss-no-spinner" value="' . esc_attr( $default_price ) . '" />' );
         $this->row( 'reminder_frequency_days', __( 'Reminder frequency (days)', 'battle-shield-sponsorship' ),
             '<input name="reminder_frequency_days" id="reminder_frequency_days" type="number" min="1" max="30" class="small-text" value="' . esc_attr( (string) $freq_days ) . '" />'
             . '<p class="description">' . esc_html__( 'How often to send artwork upload reminders.', 'battle-shield-sponsorship' ) . '</p>' );
@@ -71,12 +76,12 @@ class CampaignEditPage {
             . '</select>' );
         echo '</table>';
 
-        submit_button( $id > 0 ? __( 'Save Campaign', 'battle-shield-sponsorship' ) : __( 'Create Campaign', 'battle-shield-sponsorship' ) );
+        submit_button( $id > 0 ? __( 'Save Event', 'battle-shield-sponsorship' ) : __( 'Create Event', 'battle-shield-sponsorship' ) );
         echo '</form>';
 
         if ( $id > 0 ) {
             echo '<p><a href="' . esc_url( admin_url( 'admin.php?page=bss-campaigns' ) ) . '">&larr; '
-                . esc_html__( 'Back to Campaigns', 'battle-shield-sponsorship' ) . '</a></p>';
+                . esc_html__( 'Back to Events', 'battle-shield-sponsorship' ) . '</a></p>';
         }
 
         echo '</div>';
@@ -91,7 +96,8 @@ class CampaignEditPage {
 
         $data = [
             'name'                      => sanitize_text_field( wp_unslash( $_POST['name'] ?? '' ) ),
-            'event_date'                => sanitize_text_field( wp_unslash( $_POST['event_date'] ?? '' ) ),
+            'event_start_date'          => sanitize_text_field( wp_unslash( $_POST['event_start_date'] ?? '' ) ),
+            'event_end_date'            => sanitize_text_field( wp_unslash( $_POST['event_end_date'] ?? '' ) ),
             'sales_open_date'           => sanitize_text_field( wp_unslash( $_POST['sales_open_date'] ?? '' ) ),
             'artwork_cutoff_date'       => sanitize_text_field( wp_unslash( $_POST['artwork_cutoff_date'] ?? '' ) ),
             'reminder_frequency_days'   => (int) ( $_POST['reminder_frequency_days'] ?? 2 ),
@@ -108,7 +114,7 @@ class CampaignEditPage {
             $id = $service->create( $data );
         }
 
-        wp_safe_redirect( add_query_arg( [ 'page' => 'bss-campaigns', 'saved' => '1' ], admin_url( 'admin.php' ) ) );
+        wp_safe_redirect( add_query_arg( [ 'page' => 'bss-campaigns', 'saved' => '1' ], admin_url( 'admin.php' ) ) ); // redirect to Events list
         exit;
     }
 

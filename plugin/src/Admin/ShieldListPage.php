@@ -26,8 +26,12 @@ class ShieldListPage {
 
         echo '<div class="wrap">';
         echo '<h1>' . esc_html__( 'Shields', 'battle-shield-sponsorship' ) . '</h1>';
-        echo '<p><a class="button button-primary" href="' . esc_url( admin_url( 'admin.php?page=bss-shield-edit' ) ) . '">'
-            . esc_html__( 'Add Shield', 'battle-shield-sponsorship' ) . '</a></p>';
+        echo '<p>'
+            . '<a class="button button-primary" href="' . esc_url( admin_url( 'admin.php?page=bss-shield-edit' ) ) . '">'
+            . esc_html__( 'Add Shield', 'battle-shield-sponsorship' ) . '</a> '
+            . '<a class="button" href="' . esc_url( admin_url( 'admin.php?page=bss-shield-import' ) ) . '">'
+            . esc_html__( 'Import Shields (JSON)', 'battle-shield-sponsorship' ) . '</a>'
+            . '</p>';
 
         if ( isset( $_GET['saved'] ) ) {
             echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Shield saved.', 'battle-shield-sponsorship' ) . '</p></div>';
@@ -38,7 +42,7 @@ class ShieldListPage {
         echo '<input type="search" name="search" value="' . esc_attr( $search ) . '" placeholder="' . esc_attr__( 'Search by name…', 'battle-shield-sponsorship' ) . '" style="margin-right:8px;" />';
         echo '<select name="side" style="margin-right:8px;">';
         echo '<option value="">' . esc_html__( 'All sides', 'battle-shield-sponsorship' ) . '</option>';
-        foreach ( [ 'baron' => 'Baron', 'royalist' => 'Royalist', 'other' => 'Other' ] as $val => $label ) {
+        foreach ( [ 'royals' => 'Royals', 'rebels' => 'Rebels' ] as $val => $label ) {
             echo '<option value="' . esc_attr( $val ) . '" ' . selected( $side, $val, false ) . '>' . esc_html( $label ) . '</option>';
         }
         echo '</select>';
@@ -78,7 +82,8 @@ class ShieldListPage {
             }
             echo '</td>';
             echo '<td><strong>' . esc_html( (string) $shield->name ) . '</strong></td>';
-            echo '<td>' . esc_html( ucfirst( (string) $shield->side ) ) . '</td>';
+            $side_labels = [ 'royals' => 'Royals', 'rebels' => 'Rebels' ];
+            echo '<td>' . esc_html( $side_labels[ (string) $shield->side ] ?? ucfirst( (string) $shield->side ) ) . '</td>';
             echo '<td>' . esc_html( ucfirst( str_replace( '_', ' ', (string) $shield->physical_state ) ) ) . '</td>';
             echo '<td>£' . esc_html( number_format( (float) $shield->suggested_price, 2 ) ) . '</td>';
             echo '<td><a href="' . esc_url( admin_url( 'admin.php?page=bss-shield-edit&id=' . (int) $shield->id ) ) . '">'

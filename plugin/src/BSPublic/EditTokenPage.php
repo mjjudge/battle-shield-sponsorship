@@ -97,7 +97,26 @@ class EditTokenPage {
             echo '<p>' . esc_html__( 'Shield(s):', 'battle-shield-sponsorship' ) . ' ' . esc_html( implode( ', ', $shields ) ) . '</p>';
         }
 
-        echo '<p>' . esc_html__( 'Please provide your display name, any sponsor message, and optionally a logo to appear on your shield.', 'battle-shield-sponsorship' ) . '</p>';
+        // Show what's still outstanding so the sponsor knows what's needed.
+        $outstanding = [];
+        if ( empty( $sponsorship->display_name ) ) {
+            $outstanding[] = __( 'Sponsor display name — required before your patch can be printed', 'battle-shield-sponsorship' );
+        }
+        if ( empty( $sponsorship->logo_attachment_id ) && empty( $sponsorship->logo_not_needed ) ) {
+            $outstanding[] = __( 'Logo or image for the back of the shield', 'battle-shield-sponsorship' );
+        }
+
+        if ( $outstanding ) {
+            echo '<div class="bss-notice bss-notice--warning">';
+            echo '<p><strong>' . esc_html__( 'Still needed from you:', 'battle-shield-sponsorship' ) . '</strong></p>';
+            echo '<ul>';
+            foreach ( $outstanding as $item ) {
+                echo '<li>' . esc_html( $item ) . '</li>';
+            }
+            echo '</ul></div>';
+        } else {
+            echo '<div class="bss-notice bss-notice--success"><p>' . esc_html__( 'All details received — thank you!', 'battle-shield-sponsorship' ) . '</p></div>';
+        }
 
         if ( $campaign && $campaign->artwork_cutoff_date ) {
             echo '<p><strong>' . esc_html__( 'Artwork deadline:', 'battle-shield-sponsorship' ) . '</strong> '
@@ -129,6 +148,14 @@ class EditTokenPage {
         echo '<input type="hidden" name="logo_attachment_id" id="bss-logo-id" value="' . esc_attr( (string) $logo_id ) . '" />';
         echo '<button type="button" class="bss-button bss-button--secondary" id="bss-select-logo">' . esc_html__( 'Choose logo image', 'battle-shield-sponsorship' ) . '</button>';
         echo '<p class="bss-hint">' . esc_html__( 'Accepted: JPG, PNG, SVG. Recommended minimum 300×300px.', 'battle-shield-sponsorship' ) . '</p>';
+        echo '</div>';
+
+        echo '<div class="bss-form-row">';
+        echo '<input type="hidden" name="logo_not_needed" value="0" />';
+        echo '<label>';
+        echo '<input type="checkbox" name="logo_not_needed" value="1" ' . checked( ! empty( $sponsorship->logo_not_needed ), true, false ) . ' /> ';
+        echo esc_html__( 'I do not plan to upload a logo or image for the back of the shield', 'battle-shield-sponsorship' );
+        echo '</label>';
         echo '</div>';
 
         echo '<div class="bss-form-row">';
@@ -176,6 +203,7 @@ class EditTokenPage {
             'display_name'       => sanitize_text_field( wp_unslash( $_POST['display_name'] ?? '' ) ),
             'sponsor_text'       => sanitize_textarea_field( wp_unslash( $_POST['sponsor_text'] ?? '' ) ),
             'logo_attachment_id' => (int) ( $_POST['logo_attachment_id'] ?? 0 ) ?: null,
+            'logo_not_needed'    => (int) ( $_POST['logo_not_needed'] ?? 0 ),
         ] );
 
         $settings  = (array) get_option( 'bss_settings', [] );

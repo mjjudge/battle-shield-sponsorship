@@ -13,7 +13,12 @@ class StripeService {
      * @return array{session_id:string, checkout_url:string}
      */
     public function create_checkout_session( int $sponsorship_id, array $line_items, string $customer_email = '' ): array {
-        $settings   = $this->settings();
+        $settings = $this->settings();
+
+        if ( 'test_no_stripe' === ( $settings['stripe_mode'] ?? '' ) ) {
+            return $this->local_fallback( $sponsorship_id );
+        }
+
         $secret_key = $settings['stripe_secret_key'] ?? '';
 
         if ( '' === $secret_key ) {

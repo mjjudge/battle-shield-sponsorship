@@ -30,7 +30,14 @@ class PaymentPagesHandler {
             return '<p class="bss-notice">' . esc_html__( 'Thank you for your payment! You will receive a confirmation email shortly.', 'battle-shield-sponsorship' ) . '</p>';
         }
 
-        $status = (string) $sponsorship->payment_status;
+        $status   = (string) $sponsorship->payment_status;
+        $settings = (array) get_option( 'bss_settings', [] );
+
+        if ( 'pending' === $status && 'test_no_stripe' === ( $settings['stripe_mode'] ?? '' ) ) {
+            $sponsorship_service->mark_paid( $sponsorship_id );
+            $sponsorship = $sponsorship_service->get_by_id( $sponsorship_id );
+            $status      = $sponsorship ? (string) $sponsorship->payment_status : 'paid';
+        }
 
         if ( 'paid' !== $status ) {
             return '<p class="bss-notice">' . esc_html__( 'Your payment is being confirmed. Please wait a moment — a confirmation email will arrive shortly.', 'battle-shield-sponsorship' ) . '</p>';

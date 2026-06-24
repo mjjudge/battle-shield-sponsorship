@@ -11,26 +11,65 @@ class HelpPage {
     public function render(): void {
         RequestGuard::require_capability( 'bss_access' );
 
+        $settings         = (array) get_option( 'bss_settings', [] );
+        $shop_slug        = (string) ( $settings['shop_page_slug'] ?? 'shield-sponsorship' );
+        $success_slug     = (string) ( $settings['success_page_slug'] ?? 'shield-sponsorship-complete' );
+        $cancel_slug      = (string) ( $settings['cancel_page_slug'] ?? 'shield-sponsorship-cancel' );
+        $edit_slug        = (string) ( $settings['edit_page_slug'] ?? 'shield-sponsorship-edit' );
+
         echo '<div class="wrap">';
         echo '<h1>' . esc_html__( 'Battle Shield Sponsorship — Help', 'battle-shield-sponsorship' ) . '</h1>';
 
         echo '<h2>' . esc_html__( 'Getting Started', 'battle-shield-sponsorship' ) . '</h2>';
         echo '<ol>';
-        echo '<li>' . esc_html__( 'Create a Campaign (Campaigns → New Campaign). Set the event date, artwork cut-off, and default price.', 'battle-shield-sponsorship' ) . '</li>';
-        echo '<li>' . esc_html__( 'Add Shields (Shields → Add Shield). Each shield belongs to a side (Baron/Royalist/Other) and has a suggested price.', 'battle-shield-sponsorship' ) . '</li>';
-        echo '<li>' . esc_html__( 'Configure Stripe keys and page slugs in Settings.', 'battle-shield-sponsorship' ) . '</li>';
-        echo '<li>' . esc_html__( 'Create WordPress pages for the shop, success, cancel, and sponsor-edit URLs, adding the relevant shortcode to each.', 'battle-shield-sponsorship' ) . '</li>';
-        echo '<li>' . esc_html__( 'Set the campaign to Active to open the shop.', 'battle-shield-sponsorship' ) . '</li>';
+        echo '<li>' . esc_html__( 'Create an Event (Events → New Event). Set the event start and end dates, artwork cut-off, and default price per shield (£100 by default).', 'battle-shield-sponsorship' ) . '</li>';
+        echo '<li>' . esc_html__( 'Add Shields (Shields → Add Shield). Each shield belongs to a side — Royals (Henry III) or Rebels (Simon de Montfort) — and has a suggested price.', 'battle-shield-sponsorship' ) . '</li>';
+        echo '<li>' . esc_html__( 'Configure Settings: choose payment mode, enter Stripe keys if using Stripe, set email addresses, and confirm page slugs.', 'battle-shield-sponsorship' ) . '</li>';
+        echo '<li>' . esc_html__( 'Create the four WordPress pages listed below, adding the relevant shortcode to each.', 'battle-shield-sponsorship' ) . '</li>';
+        echo '<li>' . esc_html__( 'Set the event to Active to open the shop.', 'battle-shield-sponsorship' ) . '</li>';
         echo '</ol>';
 
-        echo '<h2>' . esc_html__( 'Shortcodes', 'battle-shield-sponsorship' ) . '</h2>';
+        echo '<h2>' . esc_html__( 'Required WordPress Pages', 'battle-shield-sponsorship' ) . '</h2>';
+        echo '<p>' . esc_html__( 'Create these four pages in WordPress. The slugs must match what is configured in Settings → Page Slugs.', 'battle-shield-sponsorship' ) . '</p>';
+        echo '<table class="widefat" style="max-width:760px;">';
+        echo '<thead><tr>';
+        echo '<th>' . esc_html__( 'Page title', 'battle-shield-sponsorship' ) . '</th>';
+        echo '<th>' . esc_html__( 'Slug (from Settings)', 'battle-shield-sponsorship' ) . '</th>';
+        echo '<th>' . esc_html__( 'Shortcode to add', 'battle-shield-sponsorship' ) . '</th>';
+        echo '</tr></thead><tbody>';
+        $pages = [
+            [ __( 'Shield Sponsorship Shop', 'battle-shield-sponsorship' ), $shop_slug,    '[battle_shield_shop]' ],
+            [ __( 'Payment Confirmed', 'battle-shield-sponsorship' ),        $success_slug, '[battle_shield_success]' ],
+            [ __( 'Payment Cancelled', 'battle-shield-sponsorship' ),        $cancel_slug,  '[battle_shield_cancel]' ],
+            [ __( 'Edit Your Sponsorship', 'battle-shield-sponsorship' ),    $edit_slug,    '[battle_shield_edit]' ],
+        ];
+        foreach ( $pages as [ $title, $slug, $code ] ) {
+            echo '<tr>';
+            echo '<td>' . esc_html( $title ) . '</td>';
+            echo '<td><code>' . esc_html( $slug ) . '</code></td>';
+            echo '<td><code>' . esc_html( $code ) . '</code></td>';
+            echo '</tr>';
+        }
+        echo '</tbody></table>';
+
+        echo '<h2>' . esc_html__( 'Payment Modes', 'battle-shield-sponsorship' ) . '</h2>';
+        echo '<dl>';
+        echo '<dt><strong>' . esc_html__( 'Test – No Stripe', 'battle-shield-sponsorship' ) . '</strong></dt>';
+        echo '<dd>' . esc_html__( 'Bypasses Stripe entirely. Payments are confirmed automatically when the sponsor reaches the success page. Use this to test the full workflow (emails, artwork links, sponsorship records) without any Stripe account or keys.', 'battle-shield-sponsorship' ) . '</dd>';
+        echo '<dt><strong>' . esc_html__( 'Test – Stripe', 'battle-shield-sponsorship' ) . '</strong></dt>';
+        echo '<dd>' . esc_html__( 'Uses Stripe test keys. Real Stripe test cards are charged. Requires test API keys and a webhook endpoint configured in Stripe.', 'battle-shield-sponsorship' ) . '</dd>';
+        echo '<dt><strong>' . esc_html__( 'Live', 'battle-shield-sponsorship' ) . '</strong></dt>';
+        echo '<dd>' . esc_html__( 'Uses Stripe live keys. Real money is charged. Switch to this only when you are ready to take real payments.', 'battle-shield-sponsorship' ) . '</dd>';
+        echo '</dl>';
+
+        echo '<h2>' . esc_html__( 'Shortcode Reference', 'battle-shield-sponsorship' ) . '</h2>';
         echo '<table class="widefat" style="max-width:700px;">';
         echo '<thead><tr><th>' . esc_html__( 'Shortcode', 'battle-shield-sponsorship' ) . '</th><th>' . esc_html__( 'Purpose', 'battle-shield-sponsorship' ) . '</th></tr></thead><tbody>';
         $shortcodes = [
-            '[battle_shield_shop]'          => __( 'Shield browsing and checkout (use on shop page)', 'battle-shield-sponsorship' ),
-            '[battle_shield_success]'        => __( 'Payment success confirmation (use on success page)', 'battle-shield-sponsorship' ),
-            '[battle_shield_cancel]'         => __( 'Payment cancelled message (use on cancel page)', 'battle-shield-sponsorship' ),
-            '[battle_shield_edit]'           => __( 'Sponsor artwork upload form (use on edit page — requires token in URL)', 'battle-shield-sponsorship' ),
+            '[battle_shield_shop]'    => __( 'Shield browsing and checkout (shop page)', 'battle-shield-sponsorship' ),
+            '[battle_shield_success]' => __( 'Payment success confirmation (success page)', 'battle-shield-sponsorship' ),
+            '[battle_shield_cancel]'  => __( 'Payment cancelled message (cancel page)', 'battle-shield-sponsorship' ),
+            '[battle_shield_edit]'    => __( 'Sponsor artwork upload form (edit page — requires token in URL)', 'battle-shield-sponsorship' ),
         ];
         foreach ( $shortcodes as $code => $desc ) {
             echo '<tr><td><code>' . esc_html( $code ) . '</code></td><td>' . esc_html( $desc ) . '</td></tr>';
@@ -39,7 +78,7 @@ class HelpPage {
 
         echo '<h2>' . esc_html__( 'Sponsor Workflow', 'battle-shield-sponsorship' ) . '</h2>';
         echo '<ol>';
-        echo '<li>' . esc_html__( 'Sponsor visits the shop page, selects a shield, and checks out via Stripe.', 'battle-shield-sponsorship' ) . '</li>';
+        echo '<li>' . esc_html__( 'Sponsor visits the shop page, selects one or more shields, and checks out.', 'battle-shield-sponsorship' ) . '</li>';
         echo '<li>' . esc_html__( 'On payment success, a sponsorship record is created and a confirmation email is sent with a unique edit link.', 'battle-shield-sponsorship' ) . '</li>';
         echo '<li>' . esc_html__( 'The sponsor clicks their edit link to upload a logo and sponsor text.', 'battle-shield-sponsorship' ) . '</li>';
         echo '<li>' . esc_html__( 'Admins are reminded when artwork is missing via the daily cron job.', 'battle-shield-sponsorship' ) . '</li>';
@@ -49,11 +88,14 @@ class HelpPage {
         echo '<h2>' . esc_html__( 'Manual Sponsorships', 'battle-shield-sponsorship' ) . '</h2>';
         echo '<p>' . esc_html__( 'Use Sponsorships → Add Manual Sponsorship to record a payment taken outside the online shop (cheque, cash, bank transfer). The sponsorship is marked as paid immediately and the sponsor receives a confirmation email with their edit link.', 'battle-shield-sponsorship' ) . '</p>';
 
+        echo '<h2>' . esc_html__( 'Shields: Royals and Rebels', 'battle-shield-sponsorship' ) . '</h2>';
+        echo '<p>' . esc_html__( 'Shields are grouped by historical side. Royals fought for King Henry III; Rebels fought for Simon de Montfort, Earl of Leicester. Sponsors can filter by side when browsing the shop.', 'battle-shield-sponsorship' ) . '</p>';
+
         echo '<h2>' . esc_html__( 'GDPR', 'battle-shield-sponsorship' ) . '</h2>';
         echo '<p>' . esc_html__( 'To handle a data removal request: open the contact in Contacts → Edit Contact and click "Anonymise Contact". This permanently removes personal details while preserving anonymised sponsorship records for accounting.', 'battle-shield-sponsorship' ) . '</p>';
 
-        echo '<h2>' . esc_html__( 'Webhook URL', 'battle-shield-sponsorship' ) . '</h2>';
-        echo '<p>' . esc_html__( 'Add this URL to your Stripe webhook dashboard:', 'battle-shield-sponsorship' ) . '</p>';
+        echo '<h2>' . esc_html__( 'Stripe Webhook URL', 'battle-shield-sponsorship' ) . '</h2>';
+        echo '<p>' . esc_html__( 'When using Stripe (Test – Stripe or Live mode), add this URL to your Stripe webhook dashboard:', 'battle-shield-sponsorship' ) . '</p>';
         echo '<code>' . esc_html( rest_url( 'bss/v1/stripe/webhook' ) ) . '</code>';
         echo '<p>' . esc_html__( 'Events to enable: checkout.session.completed, checkout.session.expired, payment_intent.payment_failed, charge.refunded', 'battle-shield-sponsorship' ) . '</p>';
 

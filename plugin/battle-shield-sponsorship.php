@@ -3,7 +3,7 @@
  * Plugin Name: Battle Shield Sponsorship
  * Plugin URI:  https://github.com/mjjudge/battle-shield-sponsorship
  * Description: A standalone WordPress plugin for managing Battle of Evesham shield sponsorships.
- * Version:     0.1.0
+ * Version:     0.1.7
  * Requires at least: 6.0
  * Requires PHP: 8.2
  * Author:      Battle of Evesham
@@ -15,7 +15,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'BSS_VERSION', '0.1.0' );
+define( 'BSS_VERSION', '0.1.7' );
 define( 'BSS_PLUGIN_FILE', __FILE__ );
 define( 'BSS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'BSS_PLUGIN_URL', plugin_dir_url( __FILE__ ) );

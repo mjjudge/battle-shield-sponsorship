@@ -53,15 +53,17 @@ class TemplateRenderer {
      */
     private function replace_tags( string $text, array $data ): string {
         $replacements = [
-            '{sponsor_name}'    => (string) ( $data['sponsor_name'] ?? '' ),
-            '{display_name}'    => (string) ( $data['display_name'] ?? '' ),
-            '{campaign_name}'   => (string) ( $data['campaign_name'] ?? '' ),
-            '{shield_names}'    => (string) ( $data['shield_names'] ?? '' ),
-            '{cutoff_date}'     => (string) ( $data['cutoff_date'] ?? '' ),
-            '{edit_url}'        => esc_url( (string) ( $data['edit_url'] ?? '' ) ),
-            '{total_amount}'    => (string) ( $data['total_amount'] ?? '' ),
-            '{payment_method}'  => (string) ( $data['payment_method'] ?? '' ),
-            '{help_email}'      => (string) ( ( (array) get_option( 'bss_settings', [] ) )['contact_email'] ?? 'helpgrow@battleofevesham.co.uk' ),
+            '{sponsor_name}'      => (string) ( $data['sponsor_name'] ?? '' ),
+            '{display_name}'      => (string) ( $data['display_name'] ?? '' ),
+            '{campaign_name}'     => (string) ( $data['campaign_name'] ?? '' ),
+            '{shield_names}'      => (string) ( $data['shield_names'] ?? '' ),
+            '{cutoff_date}'       => (string) ( $data['cutoff_date'] ?? '' ),
+            '{edit_url}'          => esc_url( (string) ( $data['edit_url'] ?? '' ) ),
+            '{total_amount}'      => (string) ( $data['total_amount'] ?? '' ),
+            '{payment_method}'    => (string) ( $data['payment_method'] ?? '' ),
+            '{outstanding_items}' => (string) ( $data['outstanding_items'] ?? '' ),
+            '{print_warning}'     => (string) ( $data['print_warning'] ?? '' ),
+            '{help_email}'        => (string) ( ( (array) get_option( 'bss_settings', [] ) )['contact_email'] ?? 'helpgrow@battleofevesham.co.uk' ),
         ];
 
         return strtr( $text, $replacements );
@@ -98,14 +100,17 @@ class TemplateRenderer {
     private function default_reminder_body( bool $is_final ): string {
         $opening = $is_final
             ? '<p>Dear {sponsor_name},</p><p>This is your <strong>final reminder</strong> — the artwork deadline for <strong>{campaign_name}</strong> is <strong>tomorrow ({cutoff_date})</strong>.</p>'
-            : '<p>Dear {sponsor_name},</p><p>This is a friendly reminder that we are still waiting for your artwork for <strong>{campaign_name}</strong>.</p>';
+            : '<p>Dear {sponsor_name},</p><p>This is a friendly reminder that we are still waiting for some details for your sponsorship of <strong>{campaign_name}</strong>.</p>';
 
         return $opening . '
 <p>Shield(s) sponsored: <strong>{shield_names}</strong></p>
+{print_warning}
+<p><strong>Still needed from you:</strong></p>
+{outstanding_items}
 <p>Artwork deadline: <strong>{cutoff_date}</strong></p>
-<p>Please upload your logo and display text using the secure link below:</p>
-<p><a href="{edit_url}">Upload your artwork</a></p>
-<p>If you have already submitted your artwork, please ignore this message.</p>
+<p>Please provide the above using your secure link:</p>
+<p><a href="{edit_url}">Update your sponsorship details</a></p>
+<p>If you have already submitted everything, please ignore this message.</p>
 <p>After the deadline, updates cannot be guaranteed to appear on the printed shield patches.</p>
 <p>Need help? Contact <a href="mailto:{help_email}">{help_email}</a>.</p>
 <p>The Battle of Evesham Team</p>';

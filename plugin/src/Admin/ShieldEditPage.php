@@ -23,8 +23,10 @@ class ShieldEditPage {
         $shield  = $id > 0 ? $service->get_by_id( $id ) : null;
 
         $name           = (string) ( $shield->name ?? '' );
-        $side           = (string) ( $shield->side ?? 'baron' );
+        $side           = (string) ( $shield->side ?? 'royals' );
         $description    = (string) ( $shield->description ?? '' );
+        $birth_date     = (string) ( $shield->birth_date ?? '' );
+        $death_date     = (string) ( $shield->death_date ?? '' );
         $suggested_price = number_format( (float) ( $shield->suggested_price ?? 0 ), 2 );
         $image_id       = (int) ( $shield->image_id ?? 0 );
         $physical_state = (string) ( $shield->physical_state ?? 'available' );
@@ -44,27 +46,32 @@ class ShieldEditPage {
 
         echo '<table class="form-table" role="presentation">';
 
-        $this->row( 'name', __( 'Baron / Royalist name', 'battle-shield-sponsorship' ),
+        $this->row( 'name', __( 'Shield name', 'battle-shield-sponsorship' ),
             '<input name="name" id="name" type="text" class="regular-text" required value="' . esc_attr( $name ) . '" />' );
 
         echo '<tr><th scope="row"><label for="side">' . esc_html__( 'Side', 'battle-shield-sponsorship' ) . '</label></th><td>';
         echo '<select name="side" id="side">';
-        foreach ( [ 'baron' => 'Baron', 'royalist' => 'Royalist', 'other' => 'Other' ] as $val => $label ) {
+        foreach ( [ 'royals' => 'Royals', 'rebels' => 'Rebels' ] as $val => $label ) {
             echo '<option value="' . esc_attr( $val ) . '" ' . selected( $side, $val, false ) . '>' . esc_html( $label ) . '</option>';
         }
         echo '</select></td></tr>';
 
-        $this->row( 'description', __( 'Short historical description', 'battle-shield-sponsorship' ),
-            '<textarea name="description" id="description" class="large-text" rows="4">' . esc_textarea( $description ) . '</textarea>' );
+        $this->row( 'description', __( 'Biography', 'battle-shield-sponsorship' ),
+            '<textarea name="description" id="description" class="large-text" rows="6">' . esc_textarea( $description ) . '</textarea>' );
+        $this->row( 'birth_date', __( 'Born', 'battle-shield-sponsorship' ),
+            '<input name="birth_date" id="birth_date" type="text" class="regular-text" value="' . esc_attr( $birth_date ) . '" />'
+            . '<p class="description">' . esc_html__( 'e.g. 1207, 17/18 June 1239', 'battle-shield-sponsorship' ) . '</p>' );
+        $this->row( 'death_date', __( 'Died', 'battle-shield-sponsorship' ),
+            '<input name="death_date" id="death_date" type="text" class="regular-text" value="' . esc_attr( $death_date ) . '" />' );
 
         $this->row( 'suggested_price', __( 'Suggested price (£)', 'battle-shield-sponsorship' ),
             '<input name="suggested_price" id="suggested_price" type="number" step="0.01" min="0" class="small-text" value="' . esc_attr( $suggested_price ) . '" />' );
 
         $thumb_url = $image_id > 0 ? (string) wp_get_attachment_image_url( $image_id, 'medium' ) : '';
         echo '<tr><th scope="row"><label>' . esc_html__( 'Shield image', 'battle-shield-sponsorship' ) . '</label></th><td>';
-        echo '<div id="shield-image-preview" style="margin-bottom:8px;">';
+        echo '<div id="shield-image-preview" style="margin-bottom:8px;width:150px;min-height:200px;background:#f0f0f0;border:1px dashed #ccc;display:flex;align-items:center;justify-content:center;">';
         if ( '' !== $thumb_url ) {
-            echo '<img src="' . esc_url( $thumb_url ) . '" style="max-width:200px;max-height:200px;" />';
+            echo '<img src="' . esc_url( $thumb_url ) . '" style="max-width:150px;max-height:225px;object-fit:contain;" />';
         }
         echo '</div>';
         echo '<input type="hidden" name="image_id" id="shield-image-id" value="' . esc_attr( (string) $image_id ) . '" />';
@@ -109,8 +116,10 @@ class ShieldEditPage {
 
         $data = [
             'name'            => sanitize_text_field( wp_unslash( $_POST['name'] ?? '' ) ),
-            'side'            => sanitize_text_field( wp_unslash( $_POST['side'] ?? 'baron' ) ),
+            'side'            => sanitize_text_field( wp_unslash( $_POST['side'] ?? 'royals' ) ),
             'description'     => sanitize_textarea_field( wp_unslash( $_POST['description'] ?? '' ) ),
+            'birth_date'      => sanitize_text_field( wp_unslash( $_POST['birth_date'] ?? '' ) ),
+            'death_date'      => sanitize_text_field( wp_unslash( $_POST['death_date'] ?? '' ) ),
             'suggested_price' => (float) ( $_POST['suggested_price'] ?? 0 ),
             'image_id'        => (int) ( $_POST['image_id'] ?? 0 ) ?: null,
             'physical_state'  => sanitize_text_field( wp_unslash( $_POST['physical_state'] ?? 'available' ) ),
@@ -147,7 +156,7 @@ class ShieldEditPage {
                     var attachment = frame.state().get('selection').first().toJSON();
                     $('#shield-image-id').val(attachment.id);
                     var preview = attachment.sizes && attachment.sizes.medium ? attachment.sizes.medium.url : attachment.url;
-                    $('#shield-image-preview').html('<img src="' + preview + '" style="max-width:200px;max-height:200px;" />');
+                    $('#shield-image-preview').html('<img src="' + preview + '" style="max-width:150px;max-height:225px;object-fit:contain;" />');
                 });
                 frame.open();
             });
