@@ -52,9 +52,17 @@ class CheckoutController {
         RequestGuard::verify_public_nonce( self::NONCE_CHECKOUT );
 
         $session_key       = sanitize_key( wp_unslash( $_POST['session_key'] ?? '' ) );
-        $gift_aid_declared = isset( $_POST['gift_aid_declared'] ) ? 1 : 0;
         $contact_name      = sanitize_text_field( wp_unslash( $_POST['contact_name'] ?? '' ) );
         $contact_email     = sanitize_email( wp_unslash( $_POST['contact_email'] ?? '' ) );
+        $display_name      = sanitize_text_field( wp_unslash( $_POST['display_name'] ?? '' ) );
+        $sponsor_text      = sanitize_textarea_field( wp_unslash( $_POST['sponsor_text'] ?? '' ) );
+        $address_line1     = sanitize_text_field( wp_unslash( $_POST['address_line1'] ?? '' ) );
+        $address_line2     = sanitize_text_field( wp_unslash( $_POST['address_line2'] ?? '' ) );
+        $city              = sanitize_text_field( wp_unslash( $_POST['city'] ?? '' ) );
+        $county            = sanitize_text_field( wp_unslash( $_POST['county'] ?? '' ) );
+        $postcode          = sanitize_text_field( wp_unslash( $_POST['postcode'] ?? '' ) );
+        $marketing_opt_in  = isset( $_POST['marketing_opt_in'] ) ? 1 : 0;
+        $gift_aid_declared = isset( $_POST['gift_aid_declared'] ) ? 1 : 0;
 
         if ( 32 !== strlen( $session_key ) ) {
             wp_safe_redirect( wp_get_referer() ?: home_url( '/' ) );
@@ -96,27 +104,45 @@ class CheckoutController {
                 'quantity' => 1,
             ];
             $shield_data[] = [
-                'shield_id'   => (int) $r->shield_id,
-                'price_paid'  => $price,
-                'reservation' => $r,
+                'shield_id'  => (int) $r->shield_id,
+                'price_paid' => $price,
             ];
         }
 
-        $contact = null;
+        $contact_id = 0;
         if ( $contact_email ) {
-            $contact = $contact_service->find_or_create( [
-                'contact_name' => $contact_name ?: $contact_email,
-                'email'        => $contact_email,
-            ] );
+            $existing = $contact_service->find_by_email( $contact_email );
+            if ( $existing ) {
+                $contact_id = (int) $existing->id;
+                $contact_service->update( $contact_id, [
+                    'contact_name'    => $contact_name ?: (string) $existing->contact_name,
+                    'address_line1'   => $address_line1 ?: (string) ( $existing->address_line1 ?? '' ),
+                    'address_line2'   => $address_line2 ?: (string) ( $existing->address_line2 ?? '' ),
+                    'city'            => $city ?: (string) ( $existing->city ?? '' ),
+                    'county'          => $county ?: (string) ( $existing->county ?? '' ),
+                    'postcode'        => $postcode ?: (string) ( $existing->postcode ?? '' ),
+                    'marketing_opt_in' => $marketing_opt_in,
+                ] );
+            } else {
+                $contact_id = $contact_service->create( [
+                    'contact_name'    => $contact_name ?: $contact_email,
+                    'email'           => $contact_email,
+                    'address_line1'   => $address_line1,
+                    'address_line2'   => $address_line2,
+                    'city'            => $city,
+                    'county'          => $county,
+                    'postcode'        => $postcode,
+                    'marketing_opt_in' => $marketing_opt_in,
+                ] );
+            }
         }
 
         $sponsorship_service = new SponsorshipService();
-        $display_name        = $contact_name ?: ( $contact ? (string) $contact->contact_name : '' );
-
         $sponsorship_id = $sponsorship_service->create_pending( [
             'campaign_id'      => (int) $campaign->id,
-            'contact_id'       => $contact ? (int) $contact->id : null,
+            'contact_id'       => $contact_id ?: null,
             'display_name'     => $display_name,
+            'sponsor_text'     => $sponsor_text,
             'payment_method'   => 'stripe',
             'total_amount'     => $total,
             'gift_aid_declared' => $gift_aid_declared,
@@ -124,8 +150,8 @@ class CheckoutController {
 
         foreach ( $shield_data as $item ) {
             $sponsorship_service->add_item( $sponsorship_id, $item['shield_id'], $item['price_paid'] );
-            $reservation_service->attach_sponsorship( (int) $item['reservation']->id, $sponsorship_id );
         }
+        $reservation_service->attach_sponsorship( $session_key, $sponsorship_id );
 
         $stripe          = new StripeService();
         $customer_email  = $contact_email ?: '';

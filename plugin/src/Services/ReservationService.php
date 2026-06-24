@@ -81,16 +81,23 @@ class ReservationService {
         $wpdb->update( $table, [ 'sponsorship_id' => $sponsorship_id ], [ 'session_key' => $session_key ] );
     }
 
-    /** @return int[] Shield IDs reserved by this session */
+    /**
+     * @return object[] Each object has: id, shield_id, price (shield suggested_price), session_key, expires_at, sponsorship_id
+     */
     public function get_session_shields( string $session_key ): array {
         global $wpdb;
-        $table = Schema::table_name( 'reservations' );
-        $ids   = $wpdb->get_col( $wpdb->prepare(
-            "SELECT shield_id FROM {$table} WHERE session_key = %s AND expires_at > %s",
+        $res_table     = Schema::table_name( 'reservations' );
+        $shields_table = Schema::table_name( 'shields' );
+        $rows = $wpdb->get_results( $wpdb->prepare(
+            "SELECT r.id, r.shield_id, r.session_key, r.expires_at, r.sponsorship_id,
+                    COALESCE(s.suggested_price, 0) AS price
+             FROM {$res_table} r
+             LEFT JOIN {$shields_table} s ON s.id = r.shield_id
+             WHERE r.session_key = %s AND r.expires_at > %s",
             $session_key,
             current_time( 'mysql', true )
         ) );
-        return array_map( 'intval', is_array( $ids ) ? $ids : [] );
+        return is_array( $rows ) ? $rows : [];
     }
 
     public function expire_stale(): void {

@@ -134,12 +134,15 @@ class ShieldService {
      *  @return array<string, mixed>
      */
     private function sanitize_shield_data( array $data ): array {
-        $valid_sides  = [ 'royals', 'rebels', 'baron', 'royalist', 'other' ];
+        $side_map     = [ 'royalist' => 'royals', 'baron' => 'rebels' ];
+        $valid_sides  = [ 'royals', 'rebels', 'other' ];
         $valid_states = [ 'available', 'reserved', 'sponsored', 'unavailable' ];
+
+        $side = $side_map[ $data['side'] ?? '' ] ?? ( $data['side'] ?? '' );
 
         return [
             'name'           => sanitize_text_field( $data['name'] ?? '' ),
-            'side'           => in_array( $data['side'] ?? '', $valid_sides, true ) ? $data['side'] : 'royals',
+            'side'           => in_array( $side, $valid_sides, true ) ? $side : 'royals',
             'description'    => sanitize_textarea_field( $data['description'] ?? '' ),
             'birth_date'     => sanitize_text_field( $data['birth_date'] ?? '' ) ?: null,
             'death_date'     => sanitize_text_field( $data['death_date'] ?? '' ) ?: null,

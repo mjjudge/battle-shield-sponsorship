@@ -52,13 +52,15 @@ class SponsorshipViewPage {
         echo '<h2>' . esc_html__( 'Details', 'battle-shield-sponsorship' ) . '</h2>';
         echo '<table class="form-table"><tbody>';
         $this->detail_row( __( 'Campaign', 'battle-shield-sponsorship' ), $campaign ? (string) $campaign->name : '—' );
-        $this->detail_row( __( 'Sponsor display name', 'battle-shield-sponsorship' ), (string) $sponsorship->display_name );
         $this->detail_row( __( 'Contact name', 'battle-shield-sponsorship' ), $contact ? (string) $contact->contact_name : '—' );
         $this->detail_row( __( 'Email', 'battle-shield-sponsorship' ), $contact ? (string) $contact->email : '—' );
         $this->detail_row( __( 'Total amount', 'battle-shield-sponsorship' ), '£' . number_format( (float) $sponsorship->total_amount, 2 ) );
         $this->detail_row( __( 'Payment method', 'battle-shield-sponsorship' ), ucfirst( str_replace( '_', ' ', (string) $sponsorship->payment_method ) ) );
         $this->detail_row( __( 'Payment status', 'battle-shield-sponsorship' ), ucfirst( (string) $sponsorship->payment_status ) );
         $this->detail_row( __( 'Artwork status', 'battle-shield-sponsorship' ), ucfirst( (string) $sponsorship->artwork_status ) );
+        if ( ! empty( $sponsorship->sponsor_text ) ) {
+            $this->detail_row( __( 'Sponsor text', 'battle-shield-sponsorship' ), (string) $sponsorship->sponsor_text );
+        }
         if ( ! empty( $sponsorship->logo_not_needed ) ) {
             $this->detail_row( __( 'Logo', 'battle-shield-sponsorship' ), __( 'Sponsor indicated no logo will be provided', 'battle-shield-sponsorship' ) );
         }
@@ -88,7 +90,7 @@ class SponsorshipViewPage {
         }
 
         if ( 'paid' === (string) $sponsorship->payment_status ) {
-            echo '<h2>' . esc_html__( 'Artwork', 'battle-shield-sponsorship' ) . '</h2>';
+            echo '<h2>' . esc_html__( 'Sponsor Details & Artwork', 'battle-shield-sponsorship' ) . '</h2>';
             wp_enqueue_media();
 
             $logo_id  = (int) ( $sponsorship->logo_attachment_id ?? 0 );
@@ -120,7 +122,7 @@ class SponsorshipViewPage {
 
             echo '</table>';
 
-            submit_button( __( 'Update Artwork', 'battle-shield-sponsorship' ) );
+            submit_button( __( 'Save Details', 'battle-shield-sponsorship' ) );
             echo '</form>';
 
             echo '<h2>' . esc_html__( 'Actions', 'battle-shield-sponsorship' ) . '</h2>';

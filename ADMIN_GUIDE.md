@@ -82,16 +82,29 @@ Go to **Shield Sponsorship → Shields → Add Shield**.
 
 ### Viewing Sponsorships
 
-**Shield Sponsorship → Sponsorships** lists all sponsorships. Use the filters at the top to narrow by campaign, payment status, or artwork status.
+**Shield Sponsorship → Sponsorships** lists all sponsorships sorted alphabetically by sponsor display name (entries without a display name appear at the bottom). Use the filters at the top to narrow by campaign, payment status, or artwork status.
 
-Click **View** on any row to see full details, edit the sponsor's display name and logo, or trigger a refund.
+Click **View** on any row to see full details, edit the sponsor's display name and logo, trigger a refund, or delete the sponsorship.
+
+To permanently remove a sponsorship, click **Delete** in the Actions column on the list, or use the **Delete Sponsorship** button on the view page. A confirmation prompt is shown before any deletion. On deletion, all sponsored shields are released back to *Available*, and the upload token, items, and any reservations are removed. Use this for testing or when a sponsor needs to switch to a different shield.
 
 ### Recording a Manual Sponsorship
 
 Use **Shield Sponsorship → Manual Sponsorship** to record a payment taken outside the online shop (phone, post, in person).
 
 - Select the campaign and shields, enter the sponsor's contact details, and choose the payment method.
-- The sponsorship is marked as paid immediately and the sponsor receives a confirmation email with their unique edit link.
+- The sponsorship is marked as paid immediately and the sponsor receives a confirmation email with their unique artwork edit link.
+- Even if you enter a display name at the time of recording, the artwork status is kept as *Incomplete* so the sponsor is still chased via the normal reminder emails until they confirm their details directly.
+
+### The Sponsor Edit Page
+
+When a sponsor follows their unique edit link, they see:
+
+- A summary panel listing any outstanding items (display name and/or logo) before the cut-off date, or a "All details received" confirmation if artwork is complete.
+- A form to update their display name, logo, sponsor text, website, and phone.
+- A *I do not plan to upload a logo or image for the back of the shield* checkbox, which lets the sponsor waive the logo requirement themselves.
+
+After the cut-off date the form is locked and the page explains that changes are no longer accepted.
 
 ### Processing a Refund
 
@@ -103,7 +116,14 @@ Go to **Shield Sponsorship → Refunds**. Find the sponsorship and click **Refun
 
 ### Chasing Missing Artwork
 
-The plugin runs a daily check automatically. Any paid sponsorship without a complete logo and display name receives a reminder email at the frequency configured per campaign.
+Artwork is considered **complete** only when both of the following are provided:
+
+- **Sponsor display name** — required before a patch can be printed
+- **Logo or image** — OR the sponsor (or admin) has checked *I do not plan to upload a logo or image for the back of the shield* to waive the logo requirement
+
+The plugin runs a daily check automatically. Any paid sponsorship with incomplete artwork receives a reminder email at the frequency configured per campaign. Each reminder lists only the items that are still missing, so sponsors know exactly what is needed. If the display name is absent, the email includes a bold warning that the patch cannot be printed until it is provided.
+
+The "no logo" waiver can be set by the admin on the Artwork section of the sponsorship view page, or by the sponsor on their personal edit page. Ticking the box pauses logo-related chasing without marking artwork complete if the display name is still missing.
 
 You can also see which sponsorships are missing artwork at a glance from **Shield Sponsorship → Sponsorships** (look at the Artwork column).
 
@@ -152,7 +172,9 @@ Available templates:
 | Refund Confirmation | After a refund is processed |
 | GDPR Removal Confirmation | After a contact is anonymised |
 
-Available tags: `{sponsor_name}` `{display_name}` `{campaign_name}` `{shield_names}` `{cutoff_date}` `{edit_url}` `{total_amount}` `{payment_method}` `{help_email}`
+Available tags: `{sponsor_name}` `{display_name}` `{campaign_name}` `{shield_names}` `{cutoff_date}` `{edit_url}` `{total_amount}` `{payment_method}` `{help_email}` `{outstanding_items}` `{print_warning}`
+
+`{outstanding_items}` renders an HTML list of whichever artwork fields are still missing for that specific sponsorship. `{print_warning}` renders a bold warning paragraph when the display name is absent (used in the default reminder templates).
 
 Click **Reset to Default** to restore the built-in wording.
 

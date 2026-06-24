@@ -19,9 +19,11 @@ class RequestGuard {
         }
     }
 
-    public static function verify_public_nonce( string $nonce_action, string $nonce_name ): bool {
+    public static function verify_public_nonce( string $nonce_action, string $nonce_name = '_wpnonce' ): void {
         $nonce = sanitize_text_field( wp_unslash( $_POST[ $nonce_name ] ?? '' ) );
-        return (bool) wp_verify_nonce( $nonce, $nonce_action );
+        if ( ! wp_verify_nonce( $nonce, $nonce_action ) ) {
+            wp_die( esc_html__( 'Security check failed.', 'battle-shield-sponsorship' ) );
+        }
     }
 
     public static function passes_honeypot( string $field_name ): bool {
