@@ -45,11 +45,11 @@ class ReportingPage {
 
             echo '<h2>' . esc_html__( 'Campaign Summary', 'battle-shield-sponsorship' ) . '</h2>';
             echo '<table class="widefat" style="max-width:500px;">';
+            echo '<tr><th>' . esc_html__( 'Total Sponsorship', 'battle-shield-sponsorship' ) . '</th><td>£' . esc_html( number_format( (float) ( $summary['total_revenue'] ?? 0 ), 2 ) ) . '</td></tr>';
             echo '<tr><th>' . esc_html__( 'Total sponsorships (paid)', 'battle-shield-sponsorship' ) . '</th><td>' . (int) ( $summary['paid_count'] ?? 0 ) . '</td></tr>';
-            echo '<tr><th>' . esc_html__( 'Total revenue', 'battle-shield-sponsorship' ) . '</th><td>£' . esc_html( number_format( (float) ( $summary['total_revenue'] ?? 0 ), 2 ) ) . '</td></tr>';
             echo '<tr><th>' . esc_html__( 'Shields sponsored', 'battle-shield-sponsorship' ) . '</th><td>' . (int) ( $summary['shields_sponsored'] ?? 0 ) . '</td></tr>';
-            echo '<tr><th>' . esc_html__( 'Artwork complete', 'battle-shield-sponsorship' ) . '</th><td>' . (int) ( $summary['artwork_complete'] ?? 0 ) . '</td></tr>';
-            echo '<tr><th>' . esc_html__( 'Artwork missing', 'battle-shield-sponsorship' ) . '</th><td>' . (int) ( $summary['artwork_missing'] ?? 0 ) . '</td></tr>';
+            echo '<tr><th>' . esc_html__( 'Shields ready for printing', 'battle-shield-sponsorship' ) . '</th><td>' . (int) ( $summary['artwork_complete'] ?? 0 ) . '</td></tr>';
+            echo '<tr><th>' . esc_html__( 'Shields missing info or logo', 'battle-shield-sponsorship' ) . '</th><td>' . (int) ( $summary['artwork_missing'] ?? 0 ) . '</td></tr>';
             echo '<tr><th>' . esc_html__( 'Gift Aid declared', 'battle-shield-sponsorship' ) . '</th><td>' . (int) ( $summary['gift_aid_count'] ?? 0 ) . '</td></tr>';
             echo '</table>';
 

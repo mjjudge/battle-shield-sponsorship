@@ -53,10 +53,10 @@ class DashboardPage {
             echo '<table class="widefat" style="max-width:600px;">';
             echo '<thead><tr><th>' . esc_html__( 'Metric', 'battle-shield-sponsorship' ) . '</th><th>' . esc_html__( 'Value', 'battle-shield-sponsorship' ) . '</th></tr></thead>';
             echo '<tbody>';
-            $this->stat_row( __( 'Total revenue', 'battle-shield-sponsorship' ), '£' . number_format( $summary['total_revenue'], 2 ) );
-            $this->stat_row( __( 'Shields sponsored (complete artwork)', 'battle-shield-sponsorship' ), (string) $summary['paid_complete'] );
-            $this->stat_row( __( 'Shields sponsored (artwork missing)', 'battle-shield-sponsorship' ), (string) $summary['paid_incomplete'] );
-            $this->stat_row( __( 'Shields available', 'battle-shield-sponsorship' ), (string) $shield_counts->available );
+            $this->stat_row( __( 'Total Sponsorship for Event', 'battle-shield-sponsorship' ), '£' . number_format( $summary['total_revenue'], 2 ) );
+            $this->stat_row( __( 'Shields sponsored (Ready for Printing)', 'battle-shield-sponsorship' ), (string) $summary['paid_complete'] );
+            $this->stat_row( __( 'Shields sponsored (missing info or logo)', 'battle-shield-sponsorship' ), (string) $summary['paid_incomplete'] );
+            $this->stat_row( __( 'Remaining Shields available for Sponsorship', 'battle-shield-sponsorship' ), (string) $shield_counts->available );
             $this->stat_row( __( 'Shields reserved (in checkout)', 'battle-shield-sponsorship' ), (string) $shield_counts->reserved );
             $this->stat_row( __( 'Shields sponsored', 'battle-shield-sponsorship' ), (string) $shield_counts->sponsored );
             $this->stat_row( __( 'Shields unavailable/damaged', 'battle-shield-sponsorship' ), (string) $shield_counts->unavailable );

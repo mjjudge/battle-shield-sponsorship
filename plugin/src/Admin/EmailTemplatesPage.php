@@ -53,13 +53,14 @@ class EmailTemplatesPage {
         echo '<div class="wrap">';
         echo '<h1>' . esc_html__( 'Email Templates', 'battle-shield-sponsorship' ) . '</h1>';
 
-        echo '<ul class="subsubsub" style="margin-bottom:16px;">';
+        echo '<ul class="subsubsub">';
         foreach ( self::TEMPLATES as $key => $label ) {
             $url    = admin_url( 'admin.php?page=bss-email-templates&template=' . $key );
             $active = $key === $active_key ? ' class="current"' : '';
             echo '<li' . $active . '><a href="' . esc_url( $url ) . '">' . esc_html( $label ) . '</a> | </li>';
         }
         echo '</ul>';
+        echo '<br class="clear" />';
 
         $template_name = self::TEMPLATES[ $active_key ];
         $option_key    = 'bss_email_tpl_' . $active_key;
@@ -72,7 +73,7 @@ class EmailTemplatesPage {
         $body    = (string) ( $saved['body'] ?? $default_body );
 
         echo '<h2>' . esc_html( $template_name ) . '</h2>';
-        echo '<p class="description">' . esc_html__( 'Available tags:', 'battle-shield-sponsorship' ) . ' ';
+        echo '<p class="description"><strong>' . esc_html__( 'Available tags:', 'battle-shield-sponsorship' ) . '</strong><br />';
         echo '<code>' . implode( '</code> <code>', array_map( 'esc_html', self::TAGS ) ) . '</code>';
         echo '</p>';
 

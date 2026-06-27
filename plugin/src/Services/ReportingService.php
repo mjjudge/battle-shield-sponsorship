@@ -11,47 +11,79 @@ class ReportingService {
     /**
      * Summary stats for a campaign.
      *
-     * @return array{total_revenue:float, shield_count:int, paid_complete:int, paid_incomplete:int, refunded:int, pending:int}
+     * paid_complete / paid_incomplete count individual shield items (not sponsorship records)
+     * so they are consistent with shield_counts->sponsored on the Dashboard.
+     *
+     * @return array{total_revenue:float, paid_count:int, shields_sponsored:int, paid_complete:int, paid_incomplete:int, artwork_complete:int, artwork_missing:int, gift_aid_count:int, refunded:int, pending:int}
      */
     public function campaign_summary( int $campaign_id ): array {
         global $wpdb;
-        $table = Schema::table_name( 'sponsorships' );
 
+        $s_table = Schema::table_name( 'sponsorships' );
+        $i_table = Schema::table_name( 'sponsorship_items' );
+
+        // Revenue, sponsorship counts and Gift Aid — one row per payment_status / artwork_status group.
         $rows = $wpdb->get_results( $wpdb->prepare(
-            "SELECT payment_status, artwork_status, SUM(total_amount) AS revenue, COUNT(*) AS cnt
-             FROM {$table}
+            "SELECT payment_status, artwork_status,
+                    SUM(total_amount) AS revenue,
+                    COUNT(*) AS sponsorship_cnt,
+                    SUM(gift_aid_declared) AS gift_aid_cnt
+             FROM {$s_table}
              WHERE campaign_id = %d
              GROUP BY payment_status, artwork_status",
             $campaign_id
         ) );
 
+        // Shield-item counts per artwork status (for paid sponsorships only).
+        $item_rows = $wpdb->get_results( $wpdb->prepare(
+            "SELECT s.artwork_status, COUNT(i.id) AS item_cnt
+             FROM {$s_table} s
+             JOIN {$i_table} i ON i.sponsorship_id = s.id
+             WHERE s.campaign_id = %d AND s.payment_status = 'paid'
+             GROUP BY s.artwork_status",
+            $campaign_id
+        ) );
+
         $summary = [
-            'total_revenue'  => 0.0,
-            'shield_count'   => 0,
-            'paid_complete'  => 0,
-            'paid_incomplete' => 0,
-            'refunded'       => 0,
-            'pending'        => 0,
+            'total_revenue'    => 0.0,
+            'paid_count'       => 0,
+            'shields_sponsored' => 0,
+            'paid_complete'    => 0,
+            'paid_incomplete'  => 0,
+            'artwork_complete' => 0,
+            'artwork_missing'  => 0,
+            'gift_aid_count'   => 0,
+            'refunded'         => 0,
+            'pending'          => 0,
         ];
 
         foreach ( ( is_array( $rows ) ? $rows : [] ) as $row ) {
-            $status         = (string) $row->payment_status;
-            $artwork        = (string) $row->artwork_status;
-            $cnt            = (int) $row->cnt;
-            $rev            = (float) $row->revenue;
+            $status  = (string) $row->payment_status;
+            $artwork = (string) $row->artwork_status;
+            $cnt     = (int) $row->sponsorship_cnt;
+            $rev     = (float) $row->revenue;
 
             if ( 'paid' === $status ) {
                 $summary['total_revenue'] += $rev;
-                $summary['shield_count']  += $cnt;
-                if ( 'complete' === $artwork ) {
-                    $summary['paid_complete'] += $cnt;
-                } else {
-                    $summary['paid_incomplete'] += $cnt;
-                }
+                $summary['paid_count']    += $cnt;
+                $summary['gift_aid_count'] += (int) $row->gift_aid_cnt;
             } elseif ( 'refunded' === $status ) {
                 $summary['refunded'] += $cnt;
             } elseif ( 'pending' === $status ) {
                 $summary['pending'] += $cnt;
+            }
+        }
+
+        // Populate shield-item counts from the items join.
+        foreach ( ( is_array( $item_rows ) ? $item_rows : [] ) as $row ) {
+            $item_cnt = (int) $row->item_cnt;
+            $summary['shields_sponsored'] += $item_cnt;
+            if ( 'complete' === (string) $row->artwork_status ) {
+                $summary['paid_complete']    = $item_cnt;
+                $summary['artwork_complete'] = $item_cnt;
+            } else {
+                $summary['paid_incomplete']  = $item_cnt;
+                $summary['artwork_missing']  = $item_cnt;
             }
         }
 

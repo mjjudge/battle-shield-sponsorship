@@ -105,7 +105,7 @@ class ManualSponsorshipPage {
             echo '<table style="border-collapse:collapse;">';
             echo '<thead><tr><th style="text-align:left;padding:4px 8px;">' . esc_html__( 'Select', 'battle-shield-sponsorship' ) . '</th>';
             echo '<th style="text-align:left;padding:4px 8px;">' . esc_html__( 'Shield', 'battle-shield-sponsorship' ) . '</th>';
-            echo '<th style="text-align:left;padding:4px 8px;">' . esc_html__( 'Price (£)', 'battle-shield-sponsorship' ) . '</th></tr></thead><tbody>';
+            echo '<th style="text-align:left;padding:4px 8px;">' . esc_html__( 'Donation (£)', 'battle-shield-sponsorship' ) . '</th></tr></thead><tbody>';
             foreach ( $available_shields as $shield ) {
                 $sid = (int) $shield->id;
                 echo '<tr>';

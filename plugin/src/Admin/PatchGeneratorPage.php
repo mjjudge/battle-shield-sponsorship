@@ -5,7 +5,9 @@ namespace BattleShieldSponsorship\Admin;
 use BattleShieldSponsorship\Security\RequestGuard;
 use BattleShieldSponsorship\Services\CampaignService;
 use BattleShieldSponsorship\Services\SponsorshipService;
+use BattleShieldSponsorship\Services\ContactService;
 use BattleShieldSponsorship\Services\PatchGenerationService;
+use BattleShieldSponsorship\Database\Schema;
 
 defined( 'ABSPATH' ) || exit;
 
@@ -22,6 +24,7 @@ class PatchGeneratorPage {
 
         $campaign_service    = new CampaignService();
         $sponsorship_service = new SponsorshipService();
+        $contact_service     = new ContactService();
 
         $active_campaign = $campaign_service->get_active();
         $campaigns       = $campaign_service->get_all();
@@ -88,37 +91,101 @@ class PatchGeneratorPage {
                 echo '<p>' . esc_html__( 'No paid sponsorships to generate patches for.', 'battle-shield-sponsorship' ) . '</p>';
             }
 
+            // Build per-shield rows sorted by shield name.
+            $shield_rows = $this->get_shield_rows( $selected_campaign_id, $paid_sponsorships, $contact_service );
+
             echo '<h2>' . esc_html__( 'Individual patches', 'battle-shield-sponsorship' ) . '</h2>';
             echo '<table class="widefat striped">';
             echo '<thead><tr>';
+            echo '<th>' . esc_html__( 'Shield', 'battle-shield-sponsorship' ) . '</th>';
             echo '<th>' . esc_html__( 'Sponsor', 'battle-shield-sponsorship' ) . '</th>';
             echo '<th>' . esc_html__( 'Artwork', 'battle-shield-sponsorship' ) . '</th>';
             echo '<th>' . esc_html__( 'Action', 'battle-shield-sponsorship' ) . '</th>';
             echo '</tr></thead><tbody>';
-            foreach ( $paid_sponsorships as $s ) {
-                echo '<tr>';
-                echo '<td>' . esc_html( (string) $s->display_name ) . '</td>';
-                $complete_cell = 'complete' === (string) $s->artwork_status
+
+            if ( empty( $shield_rows ) ) {
+                echo '<tr><td colspan="4">' . esc_html__( 'No paid sponsorships to generate patches for.', 'battle-shield-sponsorship' ) . '</td></tr>';
+            }
+
+            foreach ( $shield_rows as $row ) {
+                $sid          = (int) $row['sponsorship_id'];
+                $artwork_ok   = $row['artwork_complete'];
+                $complete_cell = $artwork_ok
                     ? '<span style="color:#2e7d32;">&#10003; ' . esc_html__( 'Complete', 'battle-shield-sponsorship' ) . '</span>'
                     : '<span style="color:#c62828;">&#10007; ' . esc_html__( 'Missing', 'battle-shield-sponsorship' ) . '</span>';
-                echo '<td>' . $complete_cell . '</td>';
 
+                echo '<tr>';
+                echo '<td><strong>' . esc_html( $row['shield_name'] ) . '</strong></td>';
+                echo '<td>' . esc_html( $row['sponsor_label'] ) . '</td>';
+                echo '<td>' . $complete_cell . '</td>';
                 echo '<td>';
                 echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" style="display:inline;">';
                 echo '<input type="hidden" name="action" value="bss_generate_patches" />';
                 echo '<input type="hidden" name="campaign_id" value="' . $selected_campaign_id . '" />';
                 echo '<input type="hidden" name="scope" value="single" />';
-                echo '<input type="hidden" name="sponsorship_id" value="' . (int) $s->id . '" />';
-                wp_nonce_field( self::NONCE_GENERATE, '_wpnonce_' . (int) $s->id );
+                echo '<input type="hidden" name="sponsorship_id" value="' . $sid . '" />';
+                wp_nonce_field( self::NONCE_GENERATE, '_wpnonce_' . $sid );
                 echo '<button type="submit" class="button button-small">' . esc_html__( 'Download patch', 'battle-shield-sponsorship' ) . '</button>';
                 echo '</form>';
                 echo '</td>';
                 echo '</tr>';
             }
+
             echo '</tbody></table>';
         }
 
         echo '</div>';
+    }
+
+    /**
+     * Returns one row per shield item across all paid sponsorships, sorted by shield name.
+     *
+     * @param object[] $paid_sponsorships
+     * @return array<int, array{shield_name:string, sponsor_label:string, sponsorship_id:int, artwork_complete:bool}>
+     */
+    private function get_shield_rows( int $campaign_id, array $paid_sponsorships, ContactService $contact_service ): array {
+        global $wpdb;
+
+        $i_table = Schema::table_name( 'sponsorship_items' );
+        $sh_table = Schema::table_name( 'shields' );
+        $s_table  = Schema::table_name( 'sponsorships' );
+        $c_table  = Schema::table_name( 'contacts' );
+
+        // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        $rows = $wpdb->get_results( $wpdb->prepare(
+            "SELECT sh.name AS shield_name,
+                    s.id AS sponsorship_id,
+                    s.display_name,
+                    s.artwork_status,
+                    c.contact_name
+             FROM {$i_table} i
+             JOIN {$sh_table} sh ON sh.id = i.shield_id
+             JOIN {$s_table} s ON s.id = i.sponsorship_id
+             LEFT JOIN {$c_table} c ON c.id = s.contact_id
+             WHERE s.campaign_id = %d AND s.payment_status = 'paid'
+             ORDER BY sh.name ASC",
+            $campaign_id
+        ) );
+
+        if ( ! is_array( $rows ) ) {
+            return [];
+        }
+
+        $result = [];
+        foreach ( $rows as $row ) {
+            $display_name  = (string) $row->display_name;
+            $contact_name  = (string) ( $row->contact_name ?? '' );
+            $sponsor_label = $display_name !== '' ? $display_name : ( $contact_name !== '' ? $contact_name : '—' );
+
+            $result[] = [
+                'shield_name'     => (string) $row->shield_name,
+                'sponsor_label'   => $sponsor_label,
+                'sponsorship_id'  => (int) $row->sponsorship_id,
+                'artwork_complete' => 'complete' === (string) $row->artwork_status,
+            ];
+        }
+
+        return $result;
     }
 
     public function handle_generate(): void {

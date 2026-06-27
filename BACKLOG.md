@@ -2,10 +2,10 @@ BACKLOG.md
 Battle Shield Sponsorship Plugin
 Project Status
 Status	Count
-Not Started	1
+Not Started	10
 In Progress	0
 Blocked	0
-Complete	74
+Complete	85
 
 Backlog Management Rules
 These rules are mandatory.
@@ -56,7 +56,78 @@ Unreleased
 Current development version.
 
 NOT STARTED
-None
+
+UAT Round 2 — Manual Sponsorship Enhancements (v0.2.x)
+
+BSS-162 Manual sponsorship: email lookup pre-fills marketing preference
+Priority: Medium
+Acceptance Criteria:
+    • Entering a known email auto-populates marketing opt-in preference
+    • New "Sponsor has opted in to being contacted for future related events" checkbox added
+    • Marketing opt-in stored on the contact record
+
+BSS-163 Manual sponsorship: add sponsor text and logo upload fields
+Priority: Medium
+Acceptance Criteria:
+    • Sponsor text (strapline) textarea added to the form
+    • Logo file upload added to the form
+    • Submitted data saved to the sponsorship record and logo attached to WP media library
+    • Sponsorship artwork_status recalculated after save
+
+UAT Round 2 — Public Shop (v0.2.x)
+
+BSS-164 Public shop: "Add to selection" scrolls to "Your selection" form
+Priority: High
+Acceptance Criteria:
+    • Clicking "Add to selection" scrolls smoothly to the top of the checkout form, not the page header
+
+BSS-165 Public shop: "Add additional shield" link below selection list
+Priority: Medium
+Acceptance Criteria:
+    • "Add additional shield" link appears below the selected-shields total
+    • Link scrolls to the Available Shields section
+
+BSS-166 Public shop: "Return to form" link after adding a second or later shield
+Priority: Medium
+Acceptance Criteria:
+    • After a second (or later) shield is added, a "Return to form" link appears below the "Add to selection" button
+    • Link scrolls to the top of the checkout form
+
+BSS-167 Public shop: persist checkout form data on page refresh
+Priority: High
+Acceptance Criteria:
+    • Contact name, email, address, display name etc. are re-populated after a page refresh
+    • Data stored client-side (sessionStorage or hidden fields)
+
+BSS-168 Public shop: fix "Read more" / shield click lockup
+Priority: Critical
+Acceptance Criteria:
+    • Clicking a shield image or "Read more" link opens a modal/lightbox overlay
+    • Page remains scrollable and interactive when overlay is open
+    • Modal shows baron name, biography, birth/death dates, and full-size shield image
+    • Clicking outside or a close button dismisses the modal
+
+UAT Round 2 — Sponsor Edit Page (v0.2.x)
+
+BSS-169 Sponsor edit page: live patch preview image
+Priority: Medium
+Acceptance Criteria:
+    • Edit page shows a rendered preview image of the patch artwork (without requiring a PDF download)
+    • Preview updates when the sponsor saves their details
+
+BSS-170 Sponsor edit page: do not prepend http:// to sponsor URL
+Priority: Low
+Acceptance Criteria:
+    • Website URL field stores and displays exactly what the sponsor typed
+    • No automatic http:// prefix added
+
+UAT Round 2 — Logs Drill-through (v0.2.x)
+
+BSS-171 Logs: add detail drill-through for audit log entries
+Priority: Low
+Acceptance Criteria:
+    • Each audit log row links to a detail view showing full context JSON
+    • Detail view shows entity type, entity ID, event type, actor, timestamp, and full context
 
 IN PROGRESS
 None
@@ -65,6 +136,86 @@ BLOCKED
 None
 
 COMPLETE
+
+UAT Round 2 — Admin UI (v0.2.x)
+
+BSS-152 Dashboard: rename metric labels and fix shield count statistics
+Priority: High
+Completed: 2026-06-27
+Acceptance Criteria:
+    • "Total revenue" → "Total Sponsorship for Event" ✓
+    • "Shields sponsored (complete artwork)" → "Shields sponsored (Ready for Printing)" ✓
+    • "Shields sponsored (artwork missing)" → "Shields sponsored (missing info or logo)" ✓
+    • "Shields available" → "Remaining Shields available for Sponsorship" ✓
+    • paid_complete and paid_incomplete count individual shields (via sponsorship_items JOIN), not sponsorship records ✓
+
+BSS-153 Shield list + editor: rename "Suggested price" to "Requested donation"
+Priority: Medium
+Completed: 2026-06-27
+Acceptance Criteria:
+    • Shield list column header reads "Requested donation" ✓
+    • Shield editor field label reads "Requested donation (£)" ✓
+    • New shield form pre-fills "Requested donation" with 100.00 ✓
+
+BSS-154 Sponsorships list: "View" → "Edit", fallback display name to contact name
+Priority: Medium
+Completed: 2026-06-27
+Acceptance Criteria:
+    • Actions column shows "Edit" instead of "View" ✓
+    • Sponsor column shows contact name when display name is blank ✓
+
+BSS-155 Sponsorship detail: improve "not found" message
+Priority: Low
+Completed: 2026-06-27
+Acceptance Criteria:
+    • When no sponsorship ID supplied the page reads: "This page is only used to edit an existing sponsorship deal. Please click on Edit in the Sponsorships page in order to see the detail." ✓
+
+BSS-156 Patch generator: sort by shield name, show sponsor in second column
+Priority: High
+Completed: 2026-06-27
+Acceptance Criteria:
+    • Individual patches table lists one row per shield (not per sponsorship) ✓
+    • Rows sorted alphabetically by shield name ✓
+    • Column 2 shows sponsor display name; falls back to contact name when blank ✓
+    • Download button generates the full sponsorship PDF (which covers that shield) ✓
+
+BSS-157 Refunds page: remove ID column, add Contact with display name fallback
+Priority: Medium
+Completed: 2026-06-27
+Acceptance Criteria:
+    • ID column removed from the paid-sponsorships table ✓
+    • Contact column added (contact name + email on second line) ✓
+    • Sponsor column falls back to contact name when display name is blank ✓
+
+BSS-158 Reports page: fix incorrect summary statistics and rename "Total revenue"
+Priority: High
+Completed: 2026-06-27
+Acceptance Criteria:
+    • "Total revenue" renamed to "Total Sponsorship" ✓
+    • All summary rows (paid count, shields sponsored, artwork complete/missing, Gift Aid) show correct values ✓
+    • ReportingService.campaign_summary() returns all keys the Reports page expects ✓
+
+BSS-159 Email templates: move selected name below menu, tags below name
+Priority: Low
+Completed: 2026-06-27
+Acceptance Criteria:
+    • Template name appears as a heading below the horizontal subsubsub menu ✓
+    • Available tags section appears below the name heading ✓
+    • Tags do not wrap alongside the menu ✓
+
+BSS-160 Logs: wrap each log table in a fixed 20-row scrollable container
+Priority: Low
+Completed: 2026-06-27
+Acceptance Criteria:
+    • Audit log table wrapped in a div with overflow-y:auto and height limited to ~20 rows ✓
+    • Email log table similarly wrapped ✓
+    • Both tables remain fully functional (headers visible, rows scrollable) ✓
+
+BSS-161 Manual sponsorship: rename "Price (£)" to "Donation (£)"
+Priority: Low
+Completed: 2026-06-27
+Acceptance Criteria:
+    • Shield selection table header reads "Donation (£)" ✓
 
 Post-Test Fixes (v0.1.x)
 BSS-130 Fix manual sponsorship: £0 amount and no linked shields

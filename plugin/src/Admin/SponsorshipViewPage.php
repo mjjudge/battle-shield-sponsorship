@@ -27,7 +27,11 @@ class SponsorshipViewPage {
         $sponsorship         = $id > 0 ? $sponsorship_service->get_by_id( $id ) : null;
 
         if ( ! $sponsorship ) {
-            echo '<div class="wrap"><p>' . esc_html__( 'Sponsorship not found.', 'battle-shield-sponsorship' ) . '</p></div>';
+            echo '<div class="wrap"><p>'
+                . esc_html__( 'This page is only used to edit an existing sponsorship deal. Please click on Edit in the Sponsorships page in order to see the detail.', 'battle-shield-sponsorship' )
+                . ' <a href="' . esc_url( admin_url( 'admin.php?page=bss-sponsorships' ) ) . '">'
+                . esc_html__( 'Go to Sponsorships', 'battle-shield-sponsorship' )
+                . '</a></p></div>';
             return;
         }
 

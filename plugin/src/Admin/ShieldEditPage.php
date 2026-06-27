@@ -27,7 +27,7 @@ class ShieldEditPage {
         $description    = (string) ( $shield->description ?? '' );
         $birth_date     = (string) ( $shield->birth_date ?? '' );
         $death_date     = (string) ( $shield->death_date ?? '' );
-        $suggested_price = number_format( (float) ( $shield->suggested_price ?? 0 ), 2 );
+        $suggested_price = number_format( (float) ( $shield->suggested_price ?? ( $id > 0 ? 0 : 100 ) ), 2 );
         $image_id       = (int) ( $shield->image_id ?? 0 );
         $physical_state = (string) ( $shield->physical_state ?? 'available' );
         $notes          = (string) ( $shield->notes ?? '' );
@@ -64,7 +64,7 @@ class ShieldEditPage {
         $this->row( 'death_date', __( 'Died', 'battle-shield-sponsorship' ),
             '<input name="death_date" id="death_date" type="text" class="regular-text" value="' . esc_attr( $death_date ) . '" />' );
 
-        $this->row( 'suggested_price', __( 'Suggested price (£)', 'battle-shield-sponsorship' ),
+        $this->row( 'suggested_price', __( 'Requested donation (£)', 'battle-shield-sponsorship' ),
             '<input name="suggested_price" id="suggested_price" type="number" step="0.01" min="0" class="small-text" value="' . esc_attr( $suggested_price ) . '" />' );
 
         $thumb_url = $image_id > 0 ? (string) wp_get_attachment_image_url( $image_id, 'medium' ) : '';

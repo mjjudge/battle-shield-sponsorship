@@ -71,8 +71,8 @@ class RefundPage {
 
             echo '<table class="widefat striped">';
             echo '<thead><tr>';
-            echo '<th>' . esc_html__( 'ID', 'battle-shield-sponsorship' ) . '</th>';
             echo '<th>' . esc_html__( 'Sponsor', 'battle-shield-sponsorship' ) . '</th>';
+            echo '<th>' . esc_html__( 'Contact', 'battle-shield-sponsorship' ) . '</th>';
             echo '<th>' . esc_html__( 'Amount', 'battle-shield-sponsorship' ) . '</th>';
             echo '<th>' . esc_html__( 'Method', 'battle-shield-sponsorship' ) . '</th>';
             echo '<th>' . esc_html__( 'Date', 'battle-shield-sponsorship' ) . '</th>';
@@ -84,9 +84,12 @@ class RefundPage {
             }
 
             foreach ( $paid_sponsorships as $s ) {
+                $contact       = $contact_service->get_by_id( (int) $s->contact_id );
+                $sponsor_label = (string) $s->display_name ?: ( $contact ? (string) $contact->contact_name : '—' );
                 echo '<tr>';
-                echo '<td>' . (int) $s->id . '</td>';
-                echo '<td>' . esc_html( (string) $s->display_name ) . '</td>';
+                echo '<td>' . esc_html( $sponsor_label ) . '</td>';
+                echo '<td>' . esc_html( $contact ? (string) $contact->contact_name : '—' )
+                    . '<br><small>' . esc_html( $contact ? (string) $contact->email : '' ) . '</small></td>';
                 echo '<td>£' . esc_html( number_format( (float) $s->total_amount, 2 ) ) . '</td>';
                 echo '<td>' . esc_html( ucfirst( (string) $s->payment_method ) ) . '</td>';
                 echo '<td>' . esc_html( date( 'd/m/Y', strtotime( (string) $s->created_at ) ) ) . '</td>';

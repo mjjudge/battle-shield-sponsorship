@@ -61,7 +61,7 @@ class ShieldListPage {
         echo '<th>' . esc_html__( 'Name', 'battle-shield-sponsorship' ) . '</th>';
         echo '<th>' . esc_html__( 'Side', 'battle-shield-sponsorship' ) . '</th>';
         echo '<th>' . esc_html__( 'State', 'battle-shield-sponsorship' ) . '</th>';
-        echo '<th>' . esc_html__( 'Suggested price', 'battle-shield-sponsorship' ) . '</th>';
+        echo '<th>' . esc_html__( 'Requested donation', 'battle-shield-sponsorship' ) . '</th>';
         echo '<th>' . esc_html__( 'Actions', 'battle-shield-sponsorship' ) . '</th>';
         echo '</tr></thead><tbody>';
 

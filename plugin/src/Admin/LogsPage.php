@@ -39,7 +39,9 @@ class LogsPage {
         $rows = $wpdb->get_results( "SELECT * FROM {$table} ORDER BY created_at DESC LIMIT 200" );
 
         echo '<h2>' . esc_html__( 'Audit Log (last 200 entries)', 'battle-shield-sponsorship' ) . '</h2>';
-        echo '<table class="widefat striped">';
+        // Scrollable container — ~20 rows visible (each row ~34 px).
+        echo '<div style="max-height:680px; overflow-y:auto; border:1px solid #c3c4c7;">';
+        echo '<table class="widefat striped" style="margin:0;">';
         echo '<thead><tr>';
         echo '<th>' . esc_html__( 'Date', 'battle-shield-sponsorship' ) . '</th>';
         echo '<th>' . esc_html__( 'Event', 'battle-shield-sponsorship' ) . '</th>';
@@ -64,6 +66,7 @@ class LogsPage {
         }
 
         echo '</tbody></table>';
+        echo '</div>';
     }
 
     private function render_email_log( \wpdb $wpdb ): void {
@@ -72,7 +75,9 @@ class LogsPage {
         $rows = $wpdb->get_results( "SELECT * FROM {$table} ORDER BY created_at DESC LIMIT 200" );
 
         echo '<h2>' . esc_html__( 'Email Log (last 200 entries)', 'battle-shield-sponsorship' ) . '</h2>';
-        echo '<table class="widefat striped">';
+        // Scrollable container — ~20 rows visible.
+        echo '<div style="max-height:680px; overflow-y:auto; border:1px solid #c3c4c7;">';
+        echo '<table class="widefat striped" style="margin:0;">';
         echo '<thead><tr>';
         echo '<th>' . esc_html__( 'Date', 'battle-shield-sponsorship' ) . '</th>';
         echo '<th>' . esc_html__( 'Recipient', 'battle-shield-sponsorship' ) . '</th>';
@@ -97,5 +102,6 @@ class LogsPage {
         }
 
         echo '</tbody></table>';
+        echo '</div>';
     }
 }

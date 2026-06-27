@@ -109,7 +109,8 @@ class SponsorshipListPage {
 
             $artwork_ok = 'complete' === (string) $s->artwork_status;
             echo '<tr>';
-            echo '<td>' . esc_html( (string) $s->display_name ?: '—' ) . '</td>';
+            $sponsor_label = (string) $s->display_name ?: ( $contact ? (string) $contact->contact_name : '—' );
+            echo '<td>' . esc_html( $sponsor_label ) . '</td>';
             echo '<td>' . esc_html( $contact ? (string) $contact->contact_name : '—' )
                 . '<br><small>' . esc_html( $contact ? (string) $contact->email : '' ) . '</small></td>';
             echo '<td>£' . esc_html( number_format( (float) $s->total_amount, 2 ) ) . '</td>';
@@ -120,7 +121,7 @@ class SponsorshipListPage {
             echo '<td>' . esc_html( date( 'd/m/Y', strtotime( (string) $s->created_at ) ) ) . '</td>';
             echo '<td>';
             echo '<a href="' . esc_url( admin_url( 'admin.php?page=bss-sponsorship-view&id=' . $sid ) ) . '">'
-                . esc_html__( 'View', 'battle-shield-sponsorship' ) . '</a>';
+                . esc_html__( 'Edit', 'battle-shield-sponsorship' ) . '</a>';
             echo ' &nbsp; ';
             echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" style="display:inline;" onsubmit="return confirm(\'' . $confirm_msg . '\')">';
             echo '<input type="hidden" name="action" value="bss_delete_sponsorship" />';

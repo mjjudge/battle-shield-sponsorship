@@ -22,8 +22,8 @@ class HelpPage {
 
         echo '<h2>' . esc_html__( 'Getting Started', 'battle-shield-sponsorship' ) . '</h2>';
         echo '<ol>';
-        echo '<li>' . esc_html__( 'Create an Event (Events → New Event). Set the event start and end dates, artwork cut-off, and default price per shield (£100 by default).', 'battle-shield-sponsorship' ) . '</li>';
-        echo '<li>' . esc_html__( 'Add Shields (Shields → Add Shield). Each shield belongs to a side — Royals (Henry III) or Rebels (Simon de Montfort) — and has a suggested price.', 'battle-shield-sponsorship' ) . '</li>';
+        echo '<li>' . esc_html__( 'Create an Event (Events → New Event). Set the event start and end dates, artwork cut-off, and default requested donation per shield (£100 by default).', 'battle-shield-sponsorship' ) . '</li>';
+        echo '<li>' . esc_html__( 'Add Shields (Shields → Add Shield). Each shield belongs to a side — Royals (Henry III) or Rebels (Simon de Montfort) — and has a requested donation amount (defaults to £100.00).', 'battle-shield-sponsorship' ) . '</li>';
         echo '<li>' . esc_html__( 'Configure Settings: choose payment mode, enter Stripe keys if using Stripe, set email addresses, and confirm page slugs.', 'battle-shield-sponsorship' ) . '</li>';
         echo '<li>' . esc_html__( 'Create the four WordPress pages listed below, adding the relevant shortcode to each.', 'battle-shield-sponsorship' ) . '</li>';
         echo '<li>' . esc_html__( 'Set the event to Active to open the shop.', 'battle-shield-sponsorship' ) . '</li>';

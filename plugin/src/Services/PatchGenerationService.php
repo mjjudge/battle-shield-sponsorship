@@ -32,10 +32,10 @@ class PatchGenerationService {
     private const PAGE_H = 272; // table height; 277 - 5 mm reserved for footer
 
     // ── Sponsor box ───────────────────────────────────────────────────────────
-    private const BOX_W_PCT = 96;  // % of PAGE_W
-    private const BOX_H     = 210; // mm  (= PAGE_H minus 62 mm tight header block)
-    private const BOX_PAD_V = 14;  // mm top + bottom inside border
-    private const BOX_PAD_H = 12;  // mm left + right inside border
+    private const BOX_W_PCT = 97;  // % of PAGE_W
+    private const BOX_H     = 189; // mm
+    private const BOX_PAD_V = 7;   // mm top + bottom inside border
+    private const BOX_PAD_H = 6;   // mm left + right inside border
     private const BOX_BORDER = '2pt solid #000000';
 
     // ── Fixed-height page rows (must sum exactly to PAGE_H = 272 mm) ──────────
@@ -53,9 +53,10 @@ class PatchGenerationService {
     //
     private const ROW_HEADER  = 20;
     private const ROW_GAP_1   = 2;
-    private const ROW_NAME    = 16;
-    private const ROW_SUPPORT = 16;
-    private const ROW_GAP_2   = 8;
+    private const ROW_NAME    = 17;
+    private const ROW_SUPPORT = 17;
+    private const ROW_GAP_2      = 19;  // air gap between 'is supported by' and box top
+    private const ROW_FOOTER_GAP  = 8;   // empty row below box — fixed-position footer lives here
 
     // ── Type sizes (pt) ───────────────────────────────────────────────────────
     private const PT_ARMY           = 46;  // 32 × 1.44 — "Royal Army" / "Rebel Army"
@@ -333,10 +334,14 @@ p     { margin:0; padding:0; }
         $side_label  = self::SIDE_LABELS[ $patch['shield_side'] ] ?? '';
         $shield_name = esc_html( (string) $patch['shield_name'] );
         $name_pt     = $this->name_font_pt( mb_strlen( (string) $patch['shield_name'] ) );
+        // Fit name row to actual font size; box grows to fill the freed space.
+        $row_name_h  = max( 12, (int) ceil( $name_pt * 0.353 ) + 1 );
+        $row_box_h   = self::PAGE_H - self::ROW_HEADER - self::ROW_GAP_1
+                       - $row_name_h - self::ROW_SUPPORT - self::ROW_GAP_2 - self::ROW_FOOTER_GAP;
 
-        $box_w_mm    = (int) round( self::PAGE_W * self::BOX_W_PCT / 100 ); // 182 mm
-        $box_inner_w = $box_w_mm - ( self::BOX_PAD_H * 2 );                  // 158 mm
-        $box_inner_h = self::BOX_H - ( self::BOX_PAD_V * 2 );                // 182 mm
+        $box_w_mm    = (int) round( self::PAGE_W * self::BOX_W_PCT / 100 ); // 184 mm
+        $box_inner_w = $box_w_mm - ( self::BOX_PAD_H * 2 );                  // 160 mm
+        $box_inner_h = $row_box_h - ( self::BOX_PAD_V * 2 );
 
         $layout       = $this->fit_sponsor_box( $patch, $box_inner_h );
         $sponsor_rows = $this->render_sponsor_rows( $patch, $tf, $box_inner_w, $layout );
@@ -360,8 +365,8 @@ p     { margin:0; padding:0; }
 
   <tr style="height:' . self::ROW_GAP_1 . 'mm;"><td></td></tr>
 
-  <tr style="height:' . self::ROW_NAME . 'mm;">
-    <td align="center" valign="top"
+  <tr style="height:' . $row_name_h . 'mm;">
+    <td align="center" valign="bottom"
         style="font-family:' . $tf . '; font-size:' . $name_pt . 'pt;
                font-weight:bold; color:' . self::BLUE . ';">
       ' . $shield_name . '
@@ -371,16 +376,16 @@ p     { margin:0; padding:0; }
   <tr style="height:' . self::ROW_SUPPORT . 'mm;">
     <td align="center" valign="top"
         style="font-family:' . $tf . '; font-size:' . self::PT_SUPPORT . 'pt;
-               font-weight:bold; color:' . self::BLUE . '; padding-top:0;">
+               font-weight:bold; color:' . self::BLUE . '; padding-top:1mm;">
       is supported by:
     </td>
   </tr>
 
   <tr style="height:' . self::ROW_GAP_2 . 'mm;"><td></td></tr>
 
-  <tr style="height:' . self::BOX_H . 'mm;">
+  <tr style="height:' . $row_box_h . 'mm;">
     <td align="center" valign="top">
-      <table style="width:' . self::BOX_W_PCT . '%; height:' . self::BOX_H . 'mm;
+      <table style="width:' . self::BOX_W_PCT . '%; height:' . $row_box_h . 'mm;
                     border:' . self::BOX_BORDER . '; border-collapse:separate; background:' . self::WHITE . ';">
         <tr>
           <td style="padding:' . self::BOX_PAD_V . 'mm ' . self::BOX_PAD_H . 'mm;
@@ -393,6 +398,8 @@ p     { margin:0; padding:0; }
       </table>
     </td>
   </tr>
+
+  <tr style="height:' . self::ROW_FOOTER_GAP . 'mm;"><td></td></tr>
 
 </table>';
     }
@@ -418,13 +425,13 @@ p     { margin:0; padding:0; }
 
         // ── Logo (or name as lead if no logo) ─────────────────────────────────
         if ( $has_logo ) {
-            $rows[] = '<tr><td style="padding-bottom:2mm; text-align:center;">'
+            $rows[] = '<tr><td style="text-align:center;">'
                 . '<img src="' . esc_attr( $patch['logo_path'] ) . '" '
                 . 'style="max-width:' . $logo_max_w_mm . 'mm; max-height:' . $logo_max_h_mm . 'mm; margin:0 auto;" />'
                 . '</td></tr>';
         } else {
             $rows[] = '<tr><td style="font-family:' . $tf . '; font-size:' . self::PT_DISPLAY_IN_BOX . 'pt;'
-                . ' font-weight:bold; padding-bottom:2mm; text-align:center;">'
+                . ' font-weight:bold; text-align:center;">'
                 . $display_name
                 . '</td></tr>';
         }
@@ -432,7 +439,7 @@ p     { margin:0; padding:0; }
         // ── Display name (below logo when logo-led) ───────────────────────────
         if ( $has_logo && $display_name !== '' ) {
             $rows[] = '<tr><td style="font-family:' . $tf . '; font-size:' . self::PT_DISPLAY_IN_BOX . 'pt;'
-                . ' font-weight:bold; padding-bottom:2mm; text-align:center;">'
+                . ' font-weight:bold; text-align:center;">'
                 . $display_name
                 . '</td></tr>';
         }
@@ -452,7 +459,7 @@ p     { margin:0; padding:0; }
         // ── Sponsor URL ───────────────────────────────────────────────────────
         if ( $sponsor_url !== '' ) {
             $rows[] = '<tr><td style="font-family:' . $tf . '; font-size:' . self::PT_CONTACT . 'pt;'
-                . ' line-height:1.0; padding-bottom:1mm; text-align:center;">'
+                . ' line-height:1.0; text-align:center;">'
                 . $sponsor_url
                 . '</td></tr>';
         }
@@ -463,6 +470,20 @@ p     { margin:0; padding:0; }
                 . ' line-height:1.0; text-align:center;">'
                 . $sponsor_phone
                 . '</td></tr>';
+        }
+
+        // Insert equal-height spacer rows between content elements (space-between fill).
+        $gap_mm = $layout['gap_mm'] ?? 0;
+        if ( $gap_mm > 0 && count( $rows ) > 1 ) {
+            $spaced = [];
+            $last_i = count( $rows ) - 1;
+            foreach ( $rows as $i => $row ) {
+                $spaced[] = $row;
+                if ( $i < $last_i ) {
+                    $spaced[] = '<tr><td style="height:' . $gap_mm . 'mm;"></td></tr>';
+                }
+            }
+            $rows = $spaced;
         }
 
         return implode( "\n", $rows );
@@ -497,30 +518,39 @@ p     { margin:0; padding:0; }
      *
      * All heights in mm.  1 pt ≈ 0.353 mm; line-height 1.0; avg char width 0.45 em.
      *
-     * @return array{text_pt: int, text_lines: int, logo_max_h: int}
+     * @return array{text_pt: int, text_lines: int, logo_max_h: int, gap_mm: int}
      */
     private function fit_sponsor_box( array $patch, int $box_inner_h ): array {
         $lh       = 1.0;
-        $box_w_mm = (int) round( self::PAGE_W * self::BOX_W_PCT / 100 ) - ( self::BOX_PAD_H * 2 ); // 158 mm
+        $box_w_mm = (int) round( self::PAGE_W * self::BOX_W_PCT / 100 ) - ( self::BOX_PAD_H * 2 ); // 172 mm
         $has_logo = ! empty( $patch['logo_path'] );
 
         // Heights of fixed-size elements (display name, URL, phone).
-        $fixed_h = 0;
+        // All three can wrap, so we estimate line count from character width.
+        $dn_lines  = 0;
+        $url_lines = 0;
+        $fixed_h   = 0;
+        $dn_line_h     = (int) ceil( self::PT_DISPLAY_IN_BOX * 0.353 * $lh );        // mm per line
+        $dn_char_p_l   = max( 1, (int) floor( $box_w_mm / ( self::PT_DISPLAY_IN_BOX * 0.353 * 0.45 ) ) );
+        $contact_line_h = (int) ceil( self::PT_CONTACT * 0.353 * $lh );
+        $contact_cpl    = max( 1, (int) floor( $box_w_mm / ( self::PT_CONTACT * 0.353 * 0.45 ) ) );
+
         if ( (string) $patch['display_name'] !== '' ) {
-            $fixed_h += (int) ceil( self::PT_DISPLAY_IN_BOX * 0.353 * $lh ) + 2;
+            $dn_lines = max( 1, (int) ceil( mb_strlen( (string) $patch['display_name'] ) / $dn_char_p_l ) );
+            $fixed_h += $dn_line_h * $dn_lines;
         }
         if ( ! empty( $patch['sponsor_url'] ) ) {
-            $fixed_h += (int) ceil( self::PT_CONTACT * 0.353 * $lh ) + 1;
+            $url_lines = max( 1, (int) ceil( mb_strlen( (string) $patch['sponsor_url'] ) / $contact_cpl ) );
+            $fixed_h  += $contact_line_h * $url_lines;
         }
         if ( ! empty( $patch['sponsor_phone'] ) ) {
-            $fixed_h += (int) ceil( self::PT_CONTACT * 0.353 * $lh );
+            $fixed_h += $contact_line_h;
         }
 
-        $logo_gap = $has_logo ? 2 : 0;
         $min_logo = $has_logo ? self::LOGO_MIN_H : 0;
 
         // Space the sponsor text can use (leaving room for a minimum-size logo).
-        $text_budget = $box_inner_h - $fixed_h - $logo_gap - $min_logo;
+        $text_budget = $box_inner_h - $fixed_h - $min_logo;
 
         $text     = (string) $patch['sponsor_text'];
         $text_pt  = $text !== '' ? $this->sponsor_text_pt( mb_strlen( $text ) ) : 0;
@@ -549,15 +579,28 @@ p     { margin:0; padding:0; }
         }
 
         // Logo fills what remains, clamped to safe bounds.
-        $logo_avail = $box_inner_h - $fixed_h - $logo_gap - $text_actual_h;
+        $logo_avail = $box_inner_h - $fixed_h - $text_actual_h;
         $logo_max_h = $has_logo
             ? (int) max( self::LOGO_MIN_H, min( self::LOGO_MAX_H_ABS, $logo_avail ) )
+            : 0;
+
+        // Space-between: compute equal gap between each content element.
+        $el_h = [];
+        if ( $has_logo && $logo_max_h > 0 )       $el_h[] = $logo_max_h;
+        if ( $dn_lines > 0 )                       $el_h[] = $dn_line_h * $dn_lines;
+        if ( $text_actual_h > 0 )                  $el_h[] = $text_actual_h;
+        if ( $url_lines > 0 )                      $el_h[] = $contact_line_h * $url_lines;
+        if ( ! empty( $patch['sponsor_phone'] ) )  $el_h[] = $contact_line_h;
+        $n_el   = count( $el_h );
+        $gap_mm = $n_el > 1
+            ? max( 0, (int) floor( ( $box_inner_h - array_sum( $el_h ) ) / ( $n_el - 1 ) ) )
             : 0;
 
         return [
             'text_pt'    => $text_pt,
             'text_lines' => $text_lines,
             'logo_max_h' => $logo_max_h,
+            'gap_mm'     => $gap_mm,
         ];
     }
 }
