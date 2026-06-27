@@ -51,7 +51,9 @@ class UploadTokenService {
     }
 
     public function edit_url( string $token ): string {
-        return add_query_arg( [ 'token' => $token ], home_url( '/shield-sponsorship/edit/' ) );
+        $settings  = (array) get_option( 'bss_settings', [] );
+        $edit_slug = (string) ( $settings['edit_page_slug'] ?? 'shield-sponsorship-edit' );
+        return add_query_arg( [ 'token' => $token ], home_url( '/' . $edit_slug . '/' ) );
     }
 
     private function generate_token(): string {

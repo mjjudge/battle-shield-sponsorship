@@ -78,6 +78,14 @@ class ManualSponsorshipPage {
             '<input name="display_name" id="display_name" type="text" class="regular-text" />'
             . '<p class="description">' . esc_html__( 'Shown on the shield. Defaults to full name if blank.', 'battle-shield-sponsorship' ) . '</p>' );
 
+        $this->row( 'sponsor_url', __( 'Sponsor website URL', 'battle-shield-sponsorship' ),
+            '<input name="sponsor_url" id="sponsor_url" type="text" class="regular-text" placeholder="e.g. www.example.com" />'
+            . '<p class="description">' . esc_html__( 'Optional — shown on the patch artwork.', 'battle-shield-sponsorship' ) . '</p>' );
+
+        $this->row( 'sponsor_phone', __( 'Sponsor phone number', 'battle-shield-sponsorship' ),
+            '<input name="sponsor_phone" id="sponsor_phone" type="tel" class="regular-text" />'
+            . '<p class="description">' . esc_html__( 'Optional — shown on the patch artwork.', 'battle-shield-sponsorship' ) . '</p>' );
+
         echo '<tr><th><label for="payment_method">' . esc_html__( 'Payment method', 'battle-shield-sponsorship' ) . '</label></th><td>';
         echo '<select name="payment_method" id="payment_method">';
         foreach ( [ 'cheque' => 'Cheque', 'cash' => 'Cash', 'bank_transfer' => 'Bank Transfer', 'other' => 'Other' ] as $val => $label ) {
@@ -143,14 +151,16 @@ class ManualSponsorshipPage {
 
         $service_class = new ManualSponsorshipService();
         $id = $service_class->create( [
-            'campaign_id'      => (int) ( $_POST['campaign_id'] ?? 0 ),
-            'contact_name'     => sanitize_text_field( wp_unslash( $_POST['contact_name'] ?? '' ) ),
-            'email'            => sanitize_email( wp_unslash( $_POST['email'] ?? '' ) ),
-            'phone'            => sanitize_text_field( wp_unslash( $_POST['phone'] ?? '' ) ),
-            'display_name'     => sanitize_text_field( wp_unslash( $_POST['display_name'] ?? '' ) ),
-            'payment_method'   => sanitize_key( wp_unslash( $_POST['payment_method'] ?? 'other' ) ),
+            'campaign_id'       => (int) ( $_POST['campaign_id'] ?? 0 ),
+            'contact_name'      => sanitize_text_field( wp_unslash( $_POST['contact_name'] ?? '' ) ),
+            'email'             => sanitize_email( wp_unslash( $_POST['email'] ?? '' ) ),
+            'phone'             => sanitize_text_field( wp_unslash( $_POST['phone'] ?? '' ) ),
+            'display_name'      => sanitize_text_field( wp_unslash( $_POST['display_name'] ?? '' ) ),
+            'sponsor_url'       => sanitize_url( wp_unslash( $_POST['sponsor_url'] ?? '' ) ),
+            'sponsor_phone'     => sanitize_text_field( wp_unslash( $_POST['sponsor_phone'] ?? '' ) ),
+            'payment_method'    => sanitize_key( wp_unslash( $_POST['payment_method'] ?? 'other' ) ),
             'gift_aid_declared' => isset( $_POST['gift_aid_declared'] ) ? 1 : 0,
-            'shields'          => $shields,
+            'shields'           => $shields,
         ] );
 
         wp_safe_redirect( add_query_arg( [ 'page' => 'bss-manual-sponsorship', 'created' => $id ], admin_url( 'admin.php' ) ) );

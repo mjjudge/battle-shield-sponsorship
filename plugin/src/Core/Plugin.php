@@ -15,11 +15,12 @@ class Plugin {
             Roles::register();
         }
 
-        // Auto-run pending schema migrations without requiring deactivation/reactivation.
-        if ( is_admin() && version_compare( \BattleShieldSponsorship\Database\Migrator::installed_version(), BSS_VERSION, '<' ) ) {
-            add_action( 'admin_init', static function (): void {
+        // Auto-run pending schema migrations — fires on any page so public flows (e.g. the
+        // sponsor edit page) are never blocked by a column that only admin_init would have added.
+        if ( version_compare( \BattleShieldSponsorship\Database\Migrator::installed_version(), BSS_VERSION, '<' ) ) {
+            add_action( 'init', static function (): void {
                 ( new \BattleShieldSponsorship\Database\Migrator() )->run();
-            } );
+            }, 1 );
         }
 
         load_plugin_textdomain(
@@ -81,6 +82,7 @@ class Plugin {
         add_action( 'bss_payment_confirmed', static function ( int $sponsorship_id ): void {
             ( new \BattleShieldSponsorship\Mail\TreasurerNotifier() )->send( $sponsorship_id );
             ( new \BattleShieldSponsorship\Mail\SponsorConfirmationNotifier() )->send( $sponsorship_id );
+            ( new \BattleShieldSponsorship\Services\ReservationService() )->release_by_sponsorship( $sponsorship_id );
         } );
     }
 }

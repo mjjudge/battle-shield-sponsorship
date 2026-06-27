@@ -43,13 +43,15 @@ class ManualSponsorshipService {
             : 'cash';
 
         $sponsorship_id = $sponsorship_service->create_pending( [
-            'campaign_id'    => (int) ( $data['campaign_id'] ?? 0 ),
-            'contact_id'     => $contact_id,
-            'display_name'   => $data['display_name'] ?? '',
-            'sponsor_text'   => $data['sponsor_text'] ?? '',
+            'campaign_id'       => (int) ( $data['campaign_id'] ?? 0 ),
+            'contact_id'        => $contact_id,
+            'display_name'      => $data['display_name'] ?? '',
+            'sponsor_text'      => $data['sponsor_text'] ?? '',
+            'sponsor_url'       => $data['sponsor_url'] ?? '',
+            'sponsor_phone'     => $data['sponsor_phone'] ?? '',
             'logo_attachment_id' => $data['logo_attachment_id'] ?? null,
-            'payment_method' => $payment_method,
-            'total_amount'   => $total,
+            'payment_method'    => $payment_method,
+            'total_amount'      => $total,
             'gift_aid_declared' => $data['gift_aid_declared'] ?? false,
         ] );
 

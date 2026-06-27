@@ -91,6 +91,8 @@ class SponsorshipService {
             'contact_id'     => (int) $data['contact_id'],
             'display_name'   => sanitize_text_field( $data['display_name'] ?? '' ),
             'sponsor_text'   => sanitize_textarea_field( $data['sponsor_text'] ?? '' ) ?: null,
+            'sponsor_url'    => sanitize_url( $data['sponsor_url'] ?? '' ) ?: null,
+            'sponsor_phone'  => sanitize_text_field( $data['sponsor_phone'] ?? '' ) ?: null,
             'logo_attachment_id' => ! empty( $data['logo_attachment_id'] ) ? (int) $data['logo_attachment_id'] : null,
             'payment_method' => in_array( $data['payment_method'] ?? 'stripe', [ 'stripe', 'bank_transfer', 'cash', 'cheque', 'other' ], true ) ? $data['payment_method'] : 'stripe',
             'total_amount'   => number_format( max( 0.0, (float) ( $data['total_amount'] ?? 0 ) ), 2, '.', '' ),
@@ -176,9 +178,20 @@ class SponsorshipService {
             'display_name'       => sanitize_text_field( $data['display_name'] ?? (string) ( $before['display_name'] ?? '' ) ),
             'sponsor_text'       => sanitize_textarea_field( $data['sponsor_text'] ?? (string) ( $before['sponsor_text'] ?? '' ) ) ?: null,
             'logo_attachment_id' => ! empty( $data['logo_attachment_id'] ) ? (int) $data['logo_attachment_id'] : ( $before['logo_attachment_id'] ?? null ),
-            'logo_not_needed'    => isset( $data['logo_not_needed'] ) ? (int) (bool) $data['logo_not_needed'] : (int) (bool) ( $before['logo_not_needed'] ?? 0 ),
             'updated_at'         => current_time( 'mysql', true ),
         ];
+
+        // logo_not_needed was added in migration 0.1.6 — guard so a missing column
+        // does not silently abort the entire update (MySQL rejects unknown columns).
+        if ( $wpdb->get_var( "SHOW COLUMNS FROM {$table} LIKE 'logo_not_needed'" ) ) {
+            $update['logo_not_needed'] = isset( $data['logo_not_needed'] ) ? (int) (bool) $data['logo_not_needed'] : (int) (bool) ( $before['logo_not_needed'] ?? 0 );
+        }
+
+        // sponsor_url / sponsor_phone added in migration 0.1.8.
+        if ( $wpdb->get_var( "SHOW COLUMNS FROM {$table} LIKE 'sponsor_url'" ) ) {
+            $update['sponsor_url']   = isset( $data['sponsor_url'] ) ? ( sanitize_url( $data['sponsor_url'] ) ?: null ) : ( $before['sponsor_url'] ?? null );
+            $update['sponsor_phone'] = isset( $data['sponsor_phone'] ) ? ( sanitize_text_field( $data['sponsor_phone'] ) ?: null ) : ( $before['sponsor_phone'] ?? null );
+        }
 
         $wpdb->update( $table, $update, [ 'id' => $id ] );
         $this->refresh_artwork_status( $id );

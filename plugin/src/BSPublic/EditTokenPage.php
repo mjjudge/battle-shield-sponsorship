@@ -38,8 +38,6 @@ class EditTokenPage {
         if ( ! is_page( $edit_slug ) ) {
             return;
         }
-        wp_enqueue_script( 'jquery' );
-        wp_enqueue_media();
         wp_enqueue_style( 'bss-sponsor-edit', BSS_PLUGIN_URL . 'assets/css/sponsor-edit.css', [], BSS_VERSION );
     }
 
@@ -123,31 +121,40 @@ class EditTokenPage {
                 . esc_html( date( 'd/m/Y', strtotime( (string) $campaign->artwork_cutoff_date ) ) ) . '</p>';
         }
 
-        echo '<form class="bss-sponsor-edit__form" method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+        echo '<form class="bss-sponsor-edit__form" method="post" enctype="multipart/form-data" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
         echo '<input type="hidden" name="action" value="bss_sponsor_save" />';
         echo '<input type="hidden" name="token" value="' . esc_attr( $token ) . '" />';
         wp_nonce_field( self::NONCE_SAVE );
 
         echo '<div class="bss-form-row">';
-        echo '<label for="bss_display_name">' . esc_html__( 'Display name (shown on shield)', 'battle-shield-sponsorship' ) . '</label>';
+        echo '<label for="bss_display_name">' . esc_html__( 'Display name (shown on shield)', 'battle-shield-sponsorship' ) . ' <span aria-hidden="true">*</span></label>';
         echo '<input type="text" name="display_name" id="bss_display_name" class="bss-input" value="' . esc_attr( (string) $sponsorship->display_name ) . '" required />';
         echo '</div>';
 
         echo '<div class="bss-form-row">';
-        echo '<label for="bss_sponsor_text">' . esc_html__( 'Sponsor message (optional)', 'battle-shield-sponsorship' ) . '</label>';
+        echo '<label for="bss_sponsor_text">' . esc_html__( 'Sponsor message / strapline (optional — shown on patch)', 'battle-shield-sponsorship' ) . '</label>';
         echo '<textarea name="sponsor_text" id="bss_sponsor_text" class="bss-input" rows="3">' . esc_textarea( (string) ( $sponsorship->sponsor_text ?? '' ) ) . '</textarea>';
         echo '</div>';
 
         echo '<div class="bss-form-row">';
+        echo '<label for="bss_sponsor_url">' . esc_html__( 'Website URL (optional — shown on patch)', 'battle-shield-sponsorship' ) . '</label>';
+        echo '<input type="text" name="sponsor_url" id="bss_sponsor_url" class="bss-input" value="' . esc_attr( (string) ( $sponsorship->sponsor_url ?? '' ) ) . '" placeholder="e.g. www.example.com" />';
+        echo '</div>';
+
+        echo '<div class="bss-form-row">';
+        echo '<label for="bss_sponsor_phone">' . esc_html__( 'Phone number (optional — shown on patch)', 'battle-shield-sponsorship' ) . '</label>';
+        echo '<input type="tel" name="sponsor_phone" id="bss_sponsor_phone" class="bss-input" value="' . esc_attr( (string) ( $sponsorship->sponsor_phone ?? '' ) ) . '" />';
+        echo '</div>';
+
+        echo '<div class="bss-form-row">';
         echo '<label>' . esc_html__( 'Logo (optional)', 'battle-shield-sponsorship' ) . '</label>';
-        echo '<div id="bss-logo-preview">';
         if ( $logo_url ) {
             echo '<img src="' . esc_url( $logo_url ) . '" style="max-width:200px;display:block;margin-bottom:8px;" />';
+            echo '<p class="bss-hint">' . esc_html__( 'A logo is already uploaded. Choose a new file below to replace it.', 'battle-shield-sponsorship' ) . '</p>';
         }
-        echo '</div>';
-        echo '<input type="hidden" name="logo_attachment_id" id="bss-logo-id" value="' . esc_attr( (string) $logo_id ) . '" />';
-        echo '<button type="button" class="bss-button bss-button--secondary" id="bss-select-logo">' . esc_html__( 'Choose logo image', 'battle-shield-sponsorship' ) . '</button>';
-        echo '<p class="bss-hint">' . esc_html__( 'Accepted: JPG, PNG, SVG. Recommended minimum 300×300px.', 'battle-shield-sponsorship' ) . '</p>';
+        echo '<input type="hidden" name="logo_attachment_id" value="' . esc_attr( (string) $logo_id ) . '" />';
+        echo '<input type="file" name="logo_file" id="bss_logo_file" class="bss-input" accept="image/jpeg,image/png,image/gif,image/svg+xml,image/webp" />';
+        echo '<p class="bss-hint">' . esc_html__( 'Accepted: JPG, PNG, SVG, WebP. Recommended minimum 300×300px.', 'battle-shield-sponsorship' ) . '</p>';
         echo '</div>';
 
         echo '<div class="bss-form-row">';
@@ -165,26 +172,6 @@ class EditTokenPage {
         echo '</form>';
         echo '</div>';
 
-        ?>
-        <script>
-        jQuery(function($) {
-            var frame;
-            $('#bss-select-logo').on('click', function(e) {
-                e.preventDefault();
-                if (frame) { frame.open(); return; }
-                frame = wp.media({ title: '<?php echo esc_js( __( 'Choose Your Logo', 'battle-shield-sponsorship' ) ); ?>', button: { text: '<?php echo esc_js( __( 'Use this logo', 'battle-shield-sponsorship' ) ); ?>' }, multiple: false });
-                frame.on('select', function() {
-                    var a = frame.state().get('selection').first().toJSON();
-                    $('#bss-logo-id').val(a.id);
-                    var url = a.sizes && a.sizes.medium ? a.sizes.medium.url : a.url;
-                    $('#bss-logo-preview').html('<img src="' + url + '" style="max-width:200px;display:block;margin-bottom:8px;" />');
-                });
-                frame.open();
-            });
-        });
-        </script>
-        <?php
-
         return (string) ob_get_clean();
     }
 
@@ -199,10 +186,18 @@ class EditTokenPage {
             wp_die( esc_html__( 'Invalid or expired token.', 'battle-shield-sponsorship' ) );
         }
 
+        $logo_attachment_id = (int) ( $_POST['logo_attachment_id'] ?? 0 ) ?: null;
+        $uploaded_id        = $this->upload_logo_file();
+        if ( null !== $uploaded_id ) {
+            $logo_attachment_id = $uploaded_id;
+        }
+
         ( new SponsorshipService() )->update_artwork( $sponsorship_id, [
             'display_name'       => sanitize_text_field( wp_unslash( $_POST['display_name'] ?? '' ) ),
             'sponsor_text'       => sanitize_textarea_field( wp_unslash( $_POST['sponsor_text'] ?? '' ) ),
-            'logo_attachment_id' => (int) ( $_POST['logo_attachment_id'] ?? 0 ) ?: null,
+            'sponsor_url'        => sanitize_url( wp_unslash( $_POST['sponsor_url'] ?? '' ) ),
+            'sponsor_phone'      => sanitize_text_field( wp_unslash( $_POST['sponsor_phone'] ?? '' ) ),
+            'logo_attachment_id' => $logo_attachment_id,
             'logo_not_needed'    => (int) ( $_POST['logo_not_needed'] ?? 0 ),
         ] );
 
@@ -210,5 +205,68 @@ class EditTokenPage {
         $edit_slug = (string) ( $settings['edit_page_slug'] ?? 'shield-sponsorship-edit' );
         wp_safe_redirect( add_query_arg( [ 'token' => $token, 'saved' => '1' ], home_url( '/' . $edit_slug . '/' ) ) );
         exit;
+    }
+
+    /**
+     * Handle an uploaded logo file without using WP's media-library admin functions.
+     * Works for non-authenticated (public) users. Returns the attachment ID on success,
+     * null if no file was submitted or the file is invalid.
+     */
+    private function upload_logo_file(): ?int {
+        $file = $_FILES['logo_file'] ?? null;
+
+        if ( ! is_array( $file ) || empty( $file['name'] ) || UPLOAD_ERR_OK !== (int) $file['error'] ) {
+            return null;
+        }
+
+        $tmp = (string) $file['tmp_name'];
+        if ( ! is_uploaded_file( $tmp ) ) {
+            return null;
+        }
+
+        // Validate MIME from actual file content (not the browser-supplied type).
+        $mime    = function_exists( 'finfo_file' )
+            ? (string) finfo_file( finfo_open( FILEINFO_MIME_TYPE ), $tmp )
+            : (string) mime_content_type( $tmp );
+        $allowed = [ 'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml' ];
+        if ( ! in_array( $mime, $allowed, true ) ) {
+            return null;
+        }
+
+        $upload_dir = wp_upload_dir();
+        if ( ! empty( $upload_dir['error'] ) ) {
+            return null;
+        }
+
+        $safe_name = sanitize_file_name( (string) $file['name'] );
+        $filename  = wp_unique_filename( $upload_dir['path'], $safe_name );
+        $dest      = $upload_dir['path'] . '/' . $filename;
+
+        if ( ! move_uploaded_file( $tmp, $dest ) ) {
+            return null;
+        }
+
+        // Create the WP attachment record (wp_insert_attachment has no capability check).
+        $attachment_id = wp_insert_attachment( [
+            'post_mime_type' => $mime,
+            'post_title'     => $filename,
+            'post_content'   => '',
+            'post_status'    => 'inherit',
+            'guid'           => $upload_dir['url'] . '/' . $filename,
+        ], $dest );
+
+        if ( is_wp_error( $attachment_id ) ) {
+            return null;
+        }
+
+        // Generate image metadata (dimensions, thumbnails) for non-SVG images.
+        if ( 'image/svg+xml' !== $mime ) {
+            if ( ! function_exists( 'wp_generate_attachment_metadata' ) ) {
+                require_once ABSPATH . 'wp-admin/includes/image.php';
+            }
+            wp_update_attachment_metadata( $attachment_id, wp_generate_attachment_metadata( $attachment_id, $dest ) );
+        }
+
+        return (int) $attachment_id;
     }
 }

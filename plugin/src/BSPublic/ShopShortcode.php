@@ -201,6 +201,18 @@ class ShopShortcode {
         echo '<p class="bss-hint">' . esc_html__( 'A short message or description to appear on your patch.', 'battle-shield-sponsorship' ) . '</p>';
         echo '</div>';
 
+        echo '<div class="bss-form-row">';
+        echo '<label for="bss_sponsor_url">' . esc_html__( 'Website (optional)', 'battle-shield-sponsorship' ) . '</label>';
+        echo '<input type="text" name="sponsor_url" id="bss_sponsor_url" class="bss-input" placeholder="e.g. www.example.com" />';
+        echo '<p class="bss-hint">' . esc_html__( 'Your website address as you would like it to appear on your patch.', 'battle-shield-sponsorship' ) . '</p>';
+        echo '</div>';
+
+        echo '<div class="bss-form-row">';
+        echo '<label for="bss_sponsor_phone">' . esc_html__( 'Phone number (optional)', 'battle-shield-sponsorship' ) . '</label>';
+        echo '<input type="text" name="sponsor_phone" id="bss_sponsor_phone" class="bss-input" />';
+        echo '<p class="bss-hint">' . esc_html__( 'Your phone number as you would like it to appear on your patch.', 'battle-shield-sponsorship' ) . '</p>';
+        echo '</div>';
+
         echo '<p class="bss-hint">' . esc_html__( 'You can also upload your logo after payment using the link in your confirmation email.', 'battle-shield-sponsorship' ) . '</p>';
 
         // Gift Aid.

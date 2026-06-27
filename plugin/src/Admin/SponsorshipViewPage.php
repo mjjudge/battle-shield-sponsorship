@@ -61,6 +61,12 @@ class SponsorshipViewPage {
         if ( ! empty( $sponsorship->sponsor_text ) ) {
             $this->detail_row( __( 'Sponsor text', 'battle-shield-sponsorship' ), (string) $sponsorship->sponsor_text );
         }
+        if ( ! empty( $sponsorship->sponsor_url ) ) {
+            $this->detail_row( __( 'Sponsor website', 'battle-shield-sponsorship' ), (string) $sponsorship->sponsor_url );
+        }
+        if ( ! empty( $sponsorship->sponsor_phone ) ) {
+            $this->detail_row( __( 'Sponsor phone', 'battle-shield-sponsorship' ), (string) $sponsorship->sponsor_phone );
+        }
         if ( ! empty( $sponsorship->logo_not_needed ) ) {
             $this->detail_row( __( 'Logo', 'battle-shield-sponsorship' ), __( 'Sponsor indicated no logo will be provided', 'battle-shield-sponsorship' ) );
         }
@@ -105,8 +111,14 @@ class SponsorshipViewPage {
             echo '<tr><th>' . esc_html__( 'Sponsor display name', 'battle-shield-sponsorship' ) . '</th><td>';
             echo '<input type="text" name="display_name" class="regular-text" value="' . esc_attr( (string) $sponsorship->display_name ) . '" /></td></tr>';
 
-            echo '<tr><th>' . esc_html__( 'Sponsor text', 'battle-shield-sponsorship' ) . '</th><td>';
+            echo '<tr><th>' . esc_html__( 'Sponsor text / strapline', 'battle-shield-sponsorship' ) . '</th><td>';
             echo '<textarea name="sponsor_text" class="large-text" rows="3">' . esc_textarea( (string) ( $sponsorship->sponsor_text ?? '' ) ) . '</textarea></td></tr>';
+
+            echo '<tr><th>' . esc_html__( 'Sponsor website URL', 'battle-shield-sponsorship' ) . '</th><td>';
+            echo '<input type="text" name="sponsor_url" class="regular-text" value="' . esc_attr( (string) ( $sponsorship->sponsor_url ?? '' ) ) . '" placeholder="e.g. www.example.com" /></td></tr>';
+
+            echo '<tr><th>' . esc_html__( 'Sponsor phone number', 'battle-shield-sponsorship' ) . '</th><td>';
+            echo '<input type="tel" name="sponsor_phone" class="regular-text" value="' . esc_attr( (string) ( $sponsorship->sponsor_phone ?? '' ) ) . '" /></td></tr>';
 
             echo '<tr><th>' . esc_html__( 'Logo', 'battle-shield-sponsorship' ) . '</th><td>';
             echo '<div id="bss-logo-preview">' . ( $logo_url ? '<img src="' . esc_url( $logo_url ) . '" style="max-width:200px;" />' : '' ) . '</div>';
@@ -170,6 +182,8 @@ class SponsorshipViewPage {
             ( new SponsorshipService() )->update_artwork( $id, [
                 'display_name'       => sanitize_text_field( wp_unslash( $_POST['display_name'] ?? '' ) ),
                 'sponsor_text'       => sanitize_textarea_field( wp_unslash( $_POST['sponsor_text'] ?? '' ) ),
+                'sponsor_url'        => sanitize_url( wp_unslash( $_POST['sponsor_url'] ?? '' ) ),
+                'sponsor_phone'      => sanitize_text_field( wp_unslash( $_POST['sponsor_phone'] ?? '' ) ),
                 'logo_attachment_id' => (int) ( $_POST['logo_attachment_id'] ?? 0 ) ?: null,
                 'logo_not_needed'    => (int) ( $_POST['logo_not_needed'] ?? 0 ),
             ] );

@@ -56,6 +56,8 @@ class CheckoutController {
         $contact_email     = sanitize_email( wp_unslash( $_POST['contact_email'] ?? '' ) );
         $display_name      = sanitize_text_field( wp_unslash( $_POST['display_name'] ?? '' ) );
         $sponsor_text      = sanitize_textarea_field( wp_unslash( $_POST['sponsor_text'] ?? '' ) );
+        $sponsor_url       = sanitize_text_field( wp_unslash( $_POST['sponsor_url'] ?? '' ) );
+        $sponsor_phone     = sanitize_text_field( wp_unslash( $_POST['sponsor_phone'] ?? '' ) );
         $address_line1     = sanitize_text_field( wp_unslash( $_POST['address_line1'] ?? '' ) );
         $address_line2     = sanitize_text_field( wp_unslash( $_POST['address_line2'] ?? '' ) );
         $city              = sanitize_text_field( wp_unslash( $_POST['city'] ?? '' ) );
@@ -92,7 +94,7 @@ class CheckoutController {
 
         foreach ( $reservations as $r ) {
             $shield = $shield_service->get_by_id( (int) $r->shield_id );
-            if ( ! $shield ) {
+            if ( ! $shield || ! in_array( (string) $shield->physical_state, [ 'available', 'reserved' ], true ) ) {
                 continue;
             }
             $price = (float) $r->price;
@@ -107,6 +109,11 @@ class CheckoutController {
                 'shield_id'  => (int) $r->shield_id,
                 'price_paid' => $price,
             ];
+        }
+
+        if ( empty( $shield_data ) ) {
+            wp_safe_redirect( add_query_arg( 'error', 'unavailable', wp_get_referer() ?: home_url( '/' ) ) );
+            exit;
         }
 
         $contact_id = 0;
@@ -143,6 +150,8 @@ class CheckoutController {
             'contact_id'       => $contact_id ?: null,
             'display_name'     => $display_name,
             'sponsor_text'     => $sponsor_text,
+            'sponsor_url'      => $sponsor_url,
+            'sponsor_phone'    => $sponsor_phone,
             'payment_method'   => 'stripe',
             'total_amount'     => $total,
             'gift_aid_declared' => $gift_aid_declared,

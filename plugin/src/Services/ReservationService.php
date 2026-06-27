@@ -75,6 +75,12 @@ class ReservationService {
         }
     }
 
+    public function release_by_sponsorship( int $sponsorship_id ): void {
+        global $wpdb;
+        $table = Schema::table_name( 'reservations' );
+        $wpdb->delete( $table, [ 'sponsorship_id' => $sponsorship_id ] );
+    }
+
     public function attach_sponsorship( string $session_key, int $sponsorship_id ): void {
         global $wpdb;
         $table = Schema::table_name( 'reservations' );

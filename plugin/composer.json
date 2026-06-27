@@ -1,0 +1,14 @@
+{
+    "name": "battle-shield/sponsorship",
+    "description": "Battle Shield Sponsorship WordPress plugin",
+    "type": "wordpress-plugin",
+    "require": {
+        "php": ">=8.2",
+        "mpdf/mpdf": "^8.2"
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "sort-packages": true
+    },
+    "minimum-stability": "stable"
+}

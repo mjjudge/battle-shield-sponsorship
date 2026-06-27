@@ -30,6 +30,7 @@ class Migrator {
         '0.1.5' => Migrations\SetDefaultShieldPrice::class,
         '0.1.6' => Migrations\AddLogoNotNeededToSponsorships::class,
         '0.1.7' => Migrations\RecalculateArtworkStatus::class,
+        '0.1.8' => Migrations\AddSponsorContactFieldsToSponsorships::class,
     ];
 
     public function run(): void {
