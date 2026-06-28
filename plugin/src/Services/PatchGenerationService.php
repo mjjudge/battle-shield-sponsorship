@@ -104,6 +104,23 @@ class PatchGenerationService {
         $this->stream_pdf( $patches, 'patch-' . $label );
     }
 
+    public function preview_for_sponsorship( int $sponsorship_id ): void {
+        $service     = new SponsorshipService();
+        $sponsorship = $service->get_by_id( $sponsorship_id );
+
+        if ( ! $sponsorship || 'paid' !== (string) $sponsorship->payment_status ) {
+            wp_die( esc_html__( 'Preview unavailable.', 'battle-shield-sponsorship' ) );
+        }
+
+        $patches = $this->build_patches( $sponsorship );
+        if ( empty( $patches ) ) {
+            wp_die( esc_html__( 'No shields found for this sponsorship.', 'battle-shield-sponsorship' ) );
+        }
+
+        $this->build_mpdf( $patches )
+             ->Output( 'patch-preview.pdf', \Mpdf\Output\Destination::INLINE );
+    }
+
     public function generate_for_campaign( int $campaign_id, bool $complete_only = false ): void {
         $service      = new SponsorshipService();
         $sponsorships = $service->get_all( $this->campaign_filters( $campaign_id, $complete_only ) );

@@ -88,7 +88,7 @@ class ShopShortcode {
 
         $this->render_basket( $reserved_by_session, $shield_service, $campaign, $session_key );
 
-        echo '<h2 class="bss-shop__heading">' . esc_html__( 'Available shields', 'battle-shield-sponsorship' ) . '</h2>';
+        echo '<h2 id="bss-available-shields" class="bss-shop__heading">' . esc_html__( 'Available shields', 'battle-shield-sponsorship' ) . '</h2>';
 
         if ( empty( $all_shields ) ) {
             echo '<p class="bss-notice">' . esc_html__( 'All shields have been sponsored — thank you!', 'battle-shield-sponsorship' ) . '</p>';
@@ -126,7 +126,7 @@ class ShopShortcode {
 
         $total = array_reduce( $reserved, fn( $carry, $r ) => $carry + (float) $r->price, 0.0 );
 
-        echo '<div class="bss-basket">';
+        echo '<div id="bss-checkout" class="bss-basket">';
         echo '<h2 class="bss-basket__heading">' . esc_html__( 'Your selection', 'battle-shield-sponsorship' ) . '</h2>';
         echo '<ul class="bss-basket__list">';
         foreach ( $reserved as $r ) {
@@ -136,6 +136,7 @@ class ShopShortcode {
         }
         echo '</ul>';
         echo '<p class="bss-basket__total"><strong>' . esc_html__( 'Total:', 'battle-shield-sponsorship' ) . ' £' . esc_html( number_format( $total, 2 ) ) . '</strong></p>';
+        echo '<p><a href="#bss-available-shields">' . esc_html__( 'Add another shield', 'battle-shield-sponsorship' ) . '</a></p>';
 
         echo '<form class="bss-checkout-form" method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
         echo '<input type="hidden" name="action" value="bss_checkout" />';
@@ -233,7 +234,7 @@ class ShopShortcode {
         echo '</label>';
         echo '</div>';
 
-        echo '<button type="submit" class="bss-button bss-button--primary">' . esc_html__( 'Proceed to payment', 'battle-shield-sponsorship' ) . '</button>';
+        echo '<button type="submit" class="bss-button bss-button--primary" style="margin-top:24px;">' . esc_html__( 'Proceed to payment', 'battle-shield-sponsorship' ) . '</button>';
         echo '</form>';
         echo '</div>';
     }
@@ -288,7 +289,7 @@ class ShopShortcode {
         $birth = trim( (string) ( $shield->birth_date ?? '' ) );
         $death = trim( (string) ( $shield->death_date ?? '' ) );
 
-        echo '<div id="' . esc_attr( $modal_id ) . '" class="bss-shield-modal" role="dialog" aria-modal="true" aria-labelledby="' . esc_attr( $modal_id ) . '-title" style="display:none;">';
+        echo '<div id="' . esc_attr( $modal_id ) . '" class="bss-shield-modal" role="dialog" aria-modal="true" aria-labelledby="' . esc_attr( $modal_id ) . '-title">';
         echo '<div class="bss-modal-overlay">';
         echo '<div class="bss-modal-content">';
         echo '<button class="bss-modal-close" type="button" aria-label="' . esc_attr__( 'Close', 'battle-shield-sponsorship' ) . '">&times;</button>';

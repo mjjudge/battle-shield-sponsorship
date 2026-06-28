@@ -177,7 +177,9 @@ class SponsorshipService {
         $update = [
             'display_name'       => sanitize_text_field( $data['display_name'] ?? (string) ( $before['display_name'] ?? '' ) ),
             'sponsor_text'       => sanitize_textarea_field( $data['sponsor_text'] ?? (string) ( $before['sponsor_text'] ?? '' ) ) ?: null,
-            'logo_attachment_id' => ! empty( $data['logo_attachment_id'] ) ? (int) $data['logo_attachment_id'] : ( $before['logo_attachment_id'] ?? null ),
+            'logo_attachment_id' => array_key_exists( 'logo_attachment_id', $data )
+                ? ( ! empty( $data['logo_attachment_id'] ) ? (int) $data['logo_attachment_id'] : null )
+                : ( $before['logo_attachment_id'] ?? null ),
             'updated_at'         => current_time( 'mysql', true ),
         ];
 
@@ -189,7 +191,7 @@ class SponsorshipService {
 
         // sponsor_url / sponsor_phone added in migration 0.1.8.
         if ( $wpdb->get_var( "SHOW COLUMNS FROM {$table} LIKE 'sponsor_url'" ) ) {
-            $update['sponsor_url']   = isset( $data['sponsor_url'] ) ? ( sanitize_url( $data['sponsor_url'] ) ?: null ) : ( $before['sponsor_url'] ?? null );
+            $update['sponsor_url']   = isset( $data['sponsor_url'] ) ? ( sanitize_text_field( $data['sponsor_url'] ) ?: null ) : ( $before['sponsor_url'] ?? null );
             $update['sponsor_phone'] = isset( $data['sponsor_phone'] ) ? ( sanitize_text_field( $data['sponsor_phone'] ) ?: null ) : ( $before['sponsor_phone'] ?? null );
         }
 

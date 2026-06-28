@@ -7,6 +7,7 @@ use BattleShieldSponsorship\Services\UploadTokenService;
 use BattleShieldSponsorship\Services\SponsorshipService;
 use BattleShieldSponsorship\Services\ShieldService;
 use BattleShieldSponsorship\Services\CampaignService;
+use BattleShieldSponsorship\Services\PatchGenerationService;
 use BattleShieldSponsorship\Mail\Mailer;
 use BattleShieldSponsorship\Mail\TemplateRenderer;
 
@@ -26,6 +27,8 @@ class EditTokenPage {
         add_shortcode( 'battle_shield_edit', [ $this, 'render' ] );
         add_action( 'admin_post_nopriv_bss_sponsor_save', [ $this, 'handle_save' ] );
         add_action( 'admin_post_bss_sponsor_save', [ $this, 'handle_save' ] );
+        add_action( 'admin_post_nopriv_bss_patch_preview', [ $this, 'handle_preview' ] );
+        add_action( 'admin_post_bss_patch_preview', [ $this, 'handle_preview' ] );
         add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_assets' ] );
     }
 
@@ -85,7 +88,7 @@ class EditTokenPage {
         }
 
         echo '<div class="bss-sponsor-edit">';
-        echo '<h2>' . esc_html__( 'Your Shield Sponsorship', 'battle-shield-sponsorship' ) . '</h2>';
+        echo '<h2 id="bss-edit-form">' . esc_html__( 'Your Shield Sponsorship', 'battle-shield-sponsorship' ) . '</h2>';
 
         if ( $campaign ) {
             echo '<p>' . sprintf( esc_html__( 'Campaign: %s', 'battle-shield-sponsorship' ), esc_html( (string) $campaign->name ) ) . '</p>';
@@ -112,8 +115,6 @@ class EditTokenPage {
                 echo '<li>' . esc_html( $item ) . '</li>';
             }
             echo '</ul></div>';
-        } else {
-            echo '<div class="bss-notice bss-notice--success"><p>' . esc_html__( 'All details received — thank you!', 'battle-shield-sponsorship' ) . '</p></div>';
         }
 
         if ( $campaign && $campaign->artwork_cutoff_date ) {
@@ -146,16 +147,51 @@ class EditTokenPage {
         echo '<input type="tel" name="sponsor_phone" id="bss_sponsor_phone" class="bss-input" value="' . esc_attr( (string) ( $sponsorship->sponsor_phone ?? '' ) ) . '" />';
         echo '</div>';
 
+        $upload_btn_label = $logo_url
+            ? __( 'Replace Image', 'battle-shield-sponsorship' )
+            : __( 'Upload Image', 'battle-shield-sponsorship' );
+
         echo '<div class="bss-form-row">';
         echo '<label>' . esc_html__( 'Logo (optional)', 'battle-shield-sponsorship' ) . '</label>';
         if ( $logo_url ) {
-            echo '<img src="' . esc_url( $logo_url ) . '" style="max-width:200px;display:block;margin-bottom:8px;" />';
-            echo '<p class="bss-hint">' . esc_html__( 'A logo is already uploaded. Choose a new file below to replace it.', 'battle-shield-sponsorship' ) . '</p>';
+            echo '<img id="bss_logo_preview" src="' . esc_url( $logo_url ) . '" style="max-width:200px;display:block;margin-bottom:8px;" />';
         }
         echo '<input type="hidden" name="logo_attachment_id" value="' . esc_attr( (string) $logo_id ) . '" />';
-        echo '<input type="file" name="logo_file" id="bss_logo_file" class="bss-input" accept="image/jpeg,image/png,image/gif,image/svg+xml,image/webp" />';
+        echo '<input type="hidden" name="remove_logo" id="bss_remove_logo" value="0" />';
+        echo '<input type="file" name="logo_file" id="bss_logo_file" accept="image/jpeg,image/png,image/gif,image/svg+xml,image/webp" style="display:none;" />';
+        echo '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">';
+        echo '<button type="button" id="bss_logo_btn" class="bss-button" onclick="document.getElementById(\'bss_logo_file\').click()">'
+            . esc_html( $upload_btn_label ) . '</button>';
+        if ( $logo_url ) {
+            echo '<button type="button" id="bss_remove_btn" class="bss-button" '
+                . 'style="color:#c62828;border-color:#c62828;" '
+                . 'onclick="bssRemoveLogo()">'
+                . esc_html__( 'Remove Image', 'battle-shield-sponsorship' )
+                . '</button>';
+        }
+        echo '</div>';
+        echo '<p class="bss-hint" style="margin-top:6px;">'
+            . esc_html__( 'Changes to your image won\'t appear until you select "Save my changes" below.', 'battle-shield-sponsorship' )
+            . '</p>';
         echo '<p class="bss-hint">' . esc_html__( 'Accepted: JPG, PNG, SVG, WebP. Recommended minimum 300×300px.', 'battle-shield-sponsorship' ) . '</p>';
         echo '</div>';
+        echo '<script>
+document.getElementById("bss_logo_file").addEventListener("change", function() {
+    var btn = document.getElementById("bss_logo_btn");
+    if (this.files && this.files.length > 0) {
+        btn.textContent = this.files[0].name;
+    }
+});
+function bssRemoveLogo() {
+    document.getElementById("bss_remove_logo").value = "1";
+    var preview = document.getElementById("bss_logo_preview");
+    if (preview) { preview.style.display = "none"; }
+    var removeBtn = document.getElementById("bss_remove_btn");
+    if (removeBtn) { removeBtn.textContent = "✕ Logo will be removed on save"; removeBtn.disabled = true; removeBtn.style.opacity = "0.6"; }
+    document.getElementById("bss_logo_btn").disabled = true;
+    document.getElementById("bss_logo_btn").style.opacity = "0.4";
+}
+</script>';
 
         echo '<div class="bss-form-row">';
         echo '<input type="hidden" name="logo_not_needed" value="0" />';
@@ -166,13 +202,45 @@ class EditTokenPage {
         echo '</div>';
 
         echo '<div class="bss-form-row">';
-        echo '<button type="submit" class="bss-button bss-button--primary">' . esc_html__( 'Save my details', 'battle-shield-sponsorship' ) . '</button>';
+        echo '<button type="submit" class="bss-button bss-button--primary">' . esc_html__( 'Save my changes', 'battle-shield-sponsorship' ) . '</button>';
         echo '</div>';
 
         echo '</form>';
+
+        // Patch preview — only show if mPDF is available.
+        if ( class_exists( '\Mpdf\Mpdf' ) ) {
+            $preview_url = add_query_arg(
+                [ 'action' => 'bss_patch_preview', 'token' => $token ],
+                admin_url( 'admin-post.php' )
+            );
+            echo '<div id="bss-patch-preview" class="bss-patch-preview" style="margin-top:32px;">';
+            echo '<h3>' . esc_html__( 'Patch preview', 'battle-shield-sponsorship' ) . '</h3>';
+            echo '<p class="bss-hint">' . esc_html__( 'This shows how your patch will look based on the details you have saved. Save your details above and refresh this page to update the preview.', 'battle-shield-sponsorship' ) . '</p>';
+            echo '<iframe src="' . esc_url( $preview_url ) . '" style="width:100%;height:820px;border:1px solid #ddd;border-radius:4px;" title="' . esc_attr__( 'Patch preview', 'battle-shield-sponsorship' ) . '"></iframe>';
+            echo '<p style="margin-top:10px;"><a href="#bss-edit-form">' . esc_html__( 'Back to edit content', 'battle-shield-sponsorship' ) . '</a></p>';
+            echo '</div>';
+        }
+
         echo '</div>';
 
         return (string) ob_get_clean();
+    }
+
+    public function handle_preview(): void {
+        $token          = sanitize_text_field( wp_unslash( $_GET['token'] ?? '' ) );
+        $token_service  = new UploadTokenService();
+        $sponsorship_id = $token_service->validate( $token );
+
+        if ( ! $sponsorship_id ) {
+            wp_die( esc_html__( 'Invalid or expired preview link.', 'battle-shield-sponsorship' ) );
+        }
+
+        if ( ! class_exists( '\Mpdf\Mpdf' ) ) {
+            wp_die( esc_html__( 'PDF preview is not available.', 'battle-shield-sponsorship' ) );
+        }
+
+        ( new PatchGenerationService() )->preview_for_sponsorship( $sponsorship_id );
+        exit;
     }
 
     public function handle_save(): void {
@@ -187,15 +255,19 @@ class EditTokenPage {
         }
 
         $logo_attachment_id = (int) ( $_POST['logo_attachment_id'] ?? 0 ) ?: null;
-        $uploaded_id        = $this->upload_logo_file();
-        if ( null !== $uploaded_id ) {
-            $logo_attachment_id = $uploaded_id;
+        if ( ! empty( $_POST['remove_logo'] ) ) {
+            $logo_attachment_id = null;
+        } else {
+            $uploaded_id = $this->upload_logo_file();
+            if ( null !== $uploaded_id ) {
+                $logo_attachment_id = $uploaded_id;
+            }
         }
 
         ( new SponsorshipService() )->update_artwork( $sponsorship_id, [
             'display_name'       => sanitize_text_field( wp_unslash( $_POST['display_name'] ?? '' ) ),
             'sponsor_text'       => sanitize_textarea_field( wp_unslash( $_POST['sponsor_text'] ?? '' ) ),
-            'sponsor_url'        => sanitize_url( wp_unslash( $_POST['sponsor_url'] ?? '' ) ),
+            'sponsor_url'        => sanitize_text_field( wp_unslash( $_POST['sponsor_url'] ?? '' ) ),
             'sponsor_phone'      => sanitize_text_field( wp_unslash( $_POST['sponsor_phone'] ?? '' ) ),
             'logo_attachment_id' => $logo_attachment_id,
             'logo_not_needed'    => (int) ( $_POST['logo_not_needed'] ?? 0 ),
@@ -203,7 +275,7 @@ class EditTokenPage {
 
         $settings  = (array) get_option( 'bss_settings', [] );
         $edit_slug = (string) ( $settings['edit_page_slug'] ?? 'shield-sponsorship-edit' );
-        wp_safe_redirect( add_query_arg( [ 'token' => $token, 'saved' => '1' ], home_url( '/' . $edit_slug . '/' ) ) );
+        wp_safe_redirect( add_query_arg( [ 'token' => $token, 'saved' => '1' ], home_url( '/' . $edit_slug . '/' ) ) . '#bss-patch-preview' );
         exit;
     }
 

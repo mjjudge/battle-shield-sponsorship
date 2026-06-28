@@ -2,10 +2,10 @@ BACKLOG.md
 Battle Shield Sponsorship Plugin
 Project Status
 Status	Count
-Not Started	10
+Not Started	7
 In Progress	0
 Blocked	0
-Complete	85
+Complete	88
 
 Backlog Management Rules
 These rules are mandatory.
@@ -99,28 +99,6 @@ Acceptance Criteria:
     • Contact name, email, address, display name etc. are re-populated after a page refresh
     • Data stored client-side (sessionStorage or hidden fields)
 
-BSS-168 Public shop: fix "Read more" / shield click lockup
-Priority: Critical
-Acceptance Criteria:
-    • Clicking a shield image or "Read more" link opens a modal/lightbox overlay
-    • Page remains scrollable and interactive when overlay is open
-    • Modal shows baron name, biography, birth/death dates, and full-size shield image
-    • Clicking outside or a close button dismisses the modal
-
-UAT Round 2 — Sponsor Edit Page (v0.2.x)
-
-BSS-169 Sponsor edit page: live patch preview image
-Priority: Medium
-Acceptance Criteria:
-    • Edit page shows a rendered preview image of the patch artwork (without requiring a PDF download)
-    • Preview updates when the sponsor saves their details
-
-BSS-170 Sponsor edit page: do not prepend http:// to sponsor URL
-Priority: Low
-Acceptance Criteria:
-    • Website URL field stores and displays exactly what the sponsor typed
-    • No automatic http:// prefix added
-
 UAT Round 2 — Logs Drill-through (v0.2.x)
 
 BSS-171 Logs: add detail drill-through for audit log entries
@@ -136,6 +114,36 @@ BLOCKED
 None
 
 COMPLETE
+
+UAT Round 2 — Sponsor Edit Page (v0.2.x)
+
+BSS-170 Sponsor edit page: do not prepend http:// to sponsor URL
+Priority: Low
+Completed: 2026-06-28
+Acceptance Criteria:
+    • Website URL field stores and displays exactly what the sponsor typed ✓
+    • No automatic http:// prefix added ✓
+Implementation: changed sanitize_url() to sanitize_text_field() — URL is print-only, not a hyperlink.
+
+UAT Round 2 — Public Shop & Edit Page (v0.2.x)
+
+BSS-168 Public shop: fix "Read more" / shield click lockup
+Priority: Critical
+Completed: 2026-06-28
+Acceptance Criteria:
+    • Clicking a shield image or "Read more" link opens a modal/lightbox overlay ✓
+    • Page remains scrollable and interactive when overlay is open ✓
+    • Modal shows baron name, biography, birth/death dates, and full-size shield image ✓
+    • Clicking outside or a close button dismisses the modal ✓
+Root cause: inline style="display:none;" on the modal div overrode the CSS class rule; removing the inline style fixed it.
+
+BSS-169 Sponsor edit page: live patch preview image
+Priority: Medium
+Completed: 2026-06-28
+Acceptance Criteria:
+    • Edit page shows a rendered preview image of the patch artwork (without requiring a PDF download) ✓
+    • Preview updates when the sponsor saves their details ✓
+Implementation: token-authenticated GET endpoint (bss_patch_preview) streams PDF inline; edit page embeds it in an iframe.
 
 UAT Round 2 — Admin UI (v0.2.x)
 
