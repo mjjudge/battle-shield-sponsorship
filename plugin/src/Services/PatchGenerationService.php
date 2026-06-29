@@ -40,11 +40,11 @@ class PatchGenerationService {
 
     // ── Fixed-height page rows (must sum exactly to PAGE_H = 272 mm) ──────────
     //
-    //   ROW_HEADER    28 ─┐
-    //   ROW_GAP_1      8  │  86 mm header block
-    //   ROW_NAME      22  │  (tightened — gap to "is supported by:" ~60 % of previous)
-    //   ROW_SUPPORT   22  │
-    //   ROW_GAP_2      6 ─┘
+    //   ROW_HEADER   20
+    //   ROW_GAP_1     2
+    //   ROW_NAME     17  (dynamic, ~17 mm default)
+    //   ROW_SUPPORT  14  (11 mm text + 3 mm padding-bottom below text)
+    //   ROW_GAP_2    22  (air gap above box top)
     //   ROW_BOX       186   (BOX_H — sponsor box; 10 mm taller to compensate)
     //   ─────────────── 272 mm ✓
     //
@@ -54,8 +54,8 @@ class PatchGenerationService {
     private const ROW_HEADER  = 20;
     private const ROW_GAP_1   = 2;
     private const ROW_NAME    = 17;
-    private const ROW_SUPPORT = 17;
-    private const ROW_GAP_2      = 19;  // air gap between 'is supported by' and box top
+    private const ROW_SUPPORT = 14;  // 11 mm text + 3 mm padding-bottom below text
+    private const ROW_GAP_2   = 22;  // air gap between 'is supported by' and box top
     private const ROW_FOOTER_GAP  = 8;   // empty row below box — fixed-position footer lives here
 
     // ── Type sizes (pt) ───────────────────────────────────────────────────────
@@ -352,7 +352,7 @@ p     { margin:0; padding:0; }
         $shield_name = esc_html( (string) $patch['shield_name'] );
         $name_pt     = $this->name_font_pt( mb_strlen( (string) $patch['shield_name'] ) );
         // Fit name row to actual font size; box grows to fill the freed space.
-        $row_name_h  = max( 12, (int) ceil( $name_pt * 0.353 ) + 1 );
+        $row_name_h  = max( 12, (int) ceil( $name_pt * 0.353 ) );
         $row_box_h   = self::PAGE_H - self::ROW_HEADER - self::ROW_GAP_1
                        - $row_name_h - self::ROW_SUPPORT - self::ROW_GAP_2 - self::ROW_FOOTER_GAP;
 
@@ -393,7 +393,7 @@ p     { margin:0; padding:0; }
   <tr style="height:' . self::ROW_SUPPORT . 'mm;">
     <td align="center" valign="top"
         style="font-family:' . $tf . '; font-size:' . self::PT_SUPPORT . 'pt;
-               font-weight:bold; color:' . self::BLUE . '; padding-top:1mm;">
+               font-weight:bold; color:' . self::BLUE . '; padding-bottom:3mm;">
       is supported by:
     </td>
   </tr>
