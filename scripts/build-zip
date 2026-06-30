@@ -27,9 +27,9 @@ OUT_ZIP="$DIST_DIR/${PLUGIN_SLUG}-${VERSION}.zip"
 if [[ -f "$PLUGIN_DIR/composer.json" ]]; then
     echo "Running composer install..."
     if [[ "${1:-}" == "--dev" ]]; then
-        composer install --working-dir="$PLUGIN_DIR"
+        composer install --ignore-platform-reqs --working-dir="$PLUGIN_DIR"
     else
-        composer install --no-dev --optimize-autoloader --working-dir="$PLUGIN_DIR"
+        composer install --no-dev --optimize-autoloader --ignore-platform-reqs --working-dir="$PLUGIN_DIR"
     fi
 fi
 
