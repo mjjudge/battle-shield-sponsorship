@@ -2,10 +2,10 @@ BACKLOG.md
 Battle Shield Sponsorship Plugin
 Project Status
 Status	Count
-Not Started	7
+Not Started	6
 In Progress	0
 Blocked	0
-Complete	88
+Complete	90
 
 Backlog Management Rules
 These rules are mandatory.
@@ -55,16 +55,12 @@ Release History
 Unreleased
 Current development version.
 
+IN PROGRESS
+None
+
 NOT STARTED
 
 UAT Round 2 — Manual Sponsorship Enhancements (v0.2.x)
-
-BSS-162 Manual sponsorship: email lookup pre-fills marketing preference
-Priority: Medium
-Acceptance Criteria:
-    • Entering a known email auto-populates marketing opt-in preference
-    • New "Sponsor has opted in to being contacted for future related events" checkbox added
-    • Marketing opt-in stored on the contact record
 
 BSS-163 Manual sponsorship: add sponsor text and logo upload fields
 Priority: Medium
@@ -114,6 +110,11 @@ BLOCKED
 None
 
 COMPLETE
+
+v0.5.0 — 2026-06-30
+
+BSS-172 Refund page: support partial refunds — COMPLETE 2026-06-30
+BSS-162 Manual sponsorship: email lookup pre-fills contact details — COMPLETE 2026-06-30
 
 UAT Round 2 — Sponsor Edit Page (v0.2.x)
 

@@ -4,7 +4,7 @@ A WordPress plugin for managing shield sponsorships at the Battle of Evesham re-
 
 ## What it does
 
-Sponsors browse available shields on a public shop page, choose one or more, pay via Stripe Checkout, and receive a unique link to upload their logo and sponsor text. Administrators manage the full lifecycle — shields, campaigns, contacts, sponsorships, refunds, artwork reminders, GDPR, and print-ready PDF patch generation.
+Sponsors browse available shields on a public shop page, choose one or more, pay via Stripe Checkout, and receive a unique link to upload their logo and sponsor text. Administrators manage the full lifecycle — shields, campaigns, contacts, sponsorships, full and partial refunds, artwork reminders, GDPR, and print-ready PDF patch generation.
 
 ## Requirements
 
@@ -67,3 +67,10 @@ php tests/run.php
 ```
 
 See `ADMIN_GUIDE.md` for operational documentation.
+
+## Recent changes (v0.5.0)
+
+- **Manual sponsorship — contact auto-fill:** tabbing out of the email field looks up an existing contact and pre-fills name, phone, postal address, marketing consent, and Gift Aid (from prior sponsorships). Changes are written back to the contact record on save.
+- **Manual sponsorship — address fields:** postal address (line 1 &amp; 2, city, county, postcode, country) added to the form as optional fields.
+- **Manual sponsorship — marketing consent:** new checkbox "Sponsor has given consent to ongoing battle event related marketing communication", pre-populated from the contact record.
+- **Partial refunds:** the Refunds page now shows an editable amount field defaulting to the full amount paid. Reduce it to issue a partial refund. For Stripe sponsorships the partial amount is sent directly to the Stripe API; for manual sponsorships it is recorded in the audit log.

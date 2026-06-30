@@ -19,19 +19,34 @@ class ManualSponsorshipService {
      * @return array{sponsorship_id:int, contact_id:int}
      */
     public function create( array $data ): array {
-        $contact_service     = new ContactService();
-        $sponsorship_service = new SponsorshipService();
-        $reservation_service = new ReservationService();
+        $contact_service      = new ContactService();
+        $sponsorship_service  = new SponsorshipService();
+        $reservation_service  = new ReservationService();
         $upload_token_service = new UploadTokenService();
 
-        $contact_id = $contact_service->find_or_create( [
-            'contact_name'     => $data['contact_name'] ?? '',
-            'display_name'     => $data['display_name'] ?? '',
-            'email'            => $data['email'] ?? '',
-            'phone'            => $data['phone'] ?? '',
-            'website_url'      => $data['website_url'] ?? '',
+        $email           = sanitize_email( $data['email'] ?? '' );
+        $existing        = $contact_service->find_by_email( $email );
+        $contact_payload = [
+            'contact_name'   => $data['contact_name'] ?? '',
+            'display_name'   => $data['display_name'] ?? '',
+            'email'          => $email,
+            'phone'          => $data['phone'] ?? '',
+            'address_line1'  => $data['address_line1'] ?? '',
+            'address_line2'  => $data['address_line2'] ?? '',
+            'city'           => $data['city'] ?? '',
+            'county'         => $data['county'] ?? '',
+            'postcode'       => $data['postcode'] ?? '',
+            'country'        => $data['country'] ?? '',
             'marketing_opt_in' => $data['marketing_opt_in'] ?? false,
-        ] );
+        ];
+
+        if ( $existing ) {
+            $contact_id = (int) $existing->id;
+            // Persist any address / phone / marketing changes the admin made in the form.
+            $contact_service->update( $contact_id, $contact_payload );
+        } else {
+            $contact_id = $contact_service->create( $contact_payload );
+        }
 
         // Accepts: shields => [ ['shield_id' => int, 'price_paid' => float], ... ]
         $shields = array_filter( (array) ( $data['shields'] ?? [] ), fn( $s ) => ! empty( $s['shield_id'] ) );
@@ -43,16 +58,16 @@ class ManualSponsorshipService {
             : 'cash';
 
         $sponsorship_id = $sponsorship_service->create_pending( [
-            'campaign_id'       => (int) ( $data['campaign_id'] ?? 0 ),
-            'contact_id'        => $contact_id,
-            'display_name'      => $data['display_name'] ?? '',
-            'sponsor_text'      => $data['sponsor_text'] ?? '',
-            'sponsor_url'       => $data['sponsor_url'] ?? '',
-            'sponsor_phone'     => $data['sponsor_phone'] ?? '',
+            'campaign_id'        => (int) ( $data['campaign_id'] ?? 0 ),
+            'contact_id'         => $contact_id,
+            'display_name'       => $data['display_name'] ?? '',
+            'sponsor_text'       => $data['sponsor_text'] ?? '',
+            'sponsor_url'        => $data['sponsor_url'] ?? '',
+            'sponsor_phone'      => $data['sponsor_phone'] ?? '',
             'logo_attachment_id' => $data['logo_attachment_id'] ?? null,
-            'payment_method'    => $payment_method,
-            'total_amount'      => $total,
-            'gift_aid_declared' => $data['gift_aid_declared'] ?? false,
+            'payment_method'     => $payment_method,
+            'total_amount'       => $total,
+            'gift_aid_declared'  => $data['gift_aid_declared'] ?? false,
         ] );
 
         foreach ( $shields as $item ) {

@@ -87,9 +87,19 @@ class HelpPage {
 
         echo '<h2>' . esc_html__( 'Manual Sponsorships', 'battle-shield-sponsorship' ) . '</h2>';
         echo '<p>' . esc_html__( 'Use Sponsorships → Add Manual Sponsorship to record a payment taken outside the online shop (cheque, cash, bank transfer). The sponsorship is marked as paid immediately and the sponsor receives a confirmation email with their edit link.', 'battle-shield-sponsorship' ) . '</p>';
+        echo '<p>' . esc_html__( 'When you type a known email address and move focus away from the field, the form automatically looks up the existing contact and pre-fills their name, phone number, postal address, marketing consent, and — if they declared Gift Aid on a previous sponsorship — the Gift Aid checkbox. Any changes you make before saving are written back to the contact record.', 'battle-shield-sponsorship' ) . '</p>';
+        echo '<p>' . esc_html__( 'The "Sponsor has given consent to ongoing battle event related marketing communication" checkbox records whether this sponsor has opted in. Address fields (address line 1 &amp; 2, city, county, postcode, country) are optional and are stored on the contact record for future correspondence.', 'battle-shield-sponsorship' ) . '</p>';
 
         echo '<h2>' . esc_html__( 'Shields: Royals and Rebels', 'battle-shield-sponsorship' ) . '</h2>';
         echo '<p>' . esc_html__( 'Shields are grouped by historical side. Royals fought for King Henry III; Rebels fought for Simon de Montfort, Earl of Leicester. Sponsors can filter by side when browsing the shop.', 'battle-shield-sponsorship' ) . '</p>';
+
+        echo '<h2>' . esc_html__( 'Refunds', 'battle-shield-sponsorship' ) . '</h2>';
+        echo '<p>' . esc_html__( 'Go to Refunds and click "Refund" next to any paid sponsorship. The refund amount defaults to the full amount paid — reduce it to issue a partial refund. The amount can never exceed the total originally paid.', 'battle-shield-sponsorship' ) . '</p>';
+        echo '<ul>';
+        echo '<li>' . esc_html__( 'Stripe sponsorships: the partial or full amount is sent to Stripe immediately. The refund appears in the sponsor\'s bank account within the usual Stripe timescales.', 'battle-shield-sponsorship' ) . '</li>';
+        echo '<li>' . esc_html__( 'Manual sponsorships (cash, cheque, bank transfer): no automated transfer is made. The refund amount and reason are recorded in the audit log for your own records.', 'battle-shield-sponsorship' ) . '</li>';
+        echo '</ul>';
+        echo '<p>' . esc_html__( 'After any refund (partial or full) the sponsorship is removed from the refundable list. Partial refunds are flagged with refund_status = "partial" in the database; full refunds are flagged "full".', 'battle-shield-sponsorship' ) . '</p>';
 
         echo '<h2>' . esc_html__( 'GDPR', 'battle-shield-sponsorship' ) . '</h2>';
         echo '<p>' . esc_html__( 'To handle a data removal request: open the contact in Contacts → Edit Contact and click "Anonymise Contact". This permanently removes personal details while preserving anonymised sponsorship records for accounting.', 'battle-shield-sponsorship' ) . '</p>';

@@ -168,6 +168,14 @@ class SponsorshipService {
         Logger::log( 'refund_issued', 'sponsorship', $id );
     }
 
+    public function mark_partial_refund( int $id ): void {
+        global $wpdb;
+        $table = Schema::table_name( 'sponsorships' );
+        $wpdb->update( $table, [ 'payment_status' => 'refunded', 'refund_status' => 'partial', 'updated_at' => current_time( 'mysql', true ) ], [ 'id' => $id ] );
+        $this->update_items_status( $id, 'refunded' );
+        Logger::log( 'partial_refund_issued', 'sponsorship', $id );
+    }
+
     /** @param array<string, mixed> $data */
     public function update_artwork( int $id, array $data ): void {
         global $wpdb;

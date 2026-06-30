@@ -38,27 +38,77 @@ class RefundPage {
         if ( $sponsorship_id > 0 ) {
             $sponsorship = $sponsorship_service->get_by_id( $sponsorship_id );
             if ( $sponsorship && 'paid' === (string) $sponsorship->payment_status ) {
-                $contact = $contact_service->get_by_id( (int) $sponsorship->contact_id );
+                $contact     = $contact_service->get_by_id( (int) $sponsorship->contact_id );
+                $total       = number_format( (float) $sponsorship->total_amount, 2 );
+                $total_raw   = number_format( (float) $sponsorship->total_amount, 2, '.', '' );
+
                 echo '<h2>' . sprintf( esc_html__( 'Refund Sponsorship #%d', 'battle-shield-sponsorship' ), $sponsorship_id ) . '</h2>';
                 echo '<table class="form-table" style="max-width:500px;"><tbody>';
                 echo '<tr><th>' . esc_html__( 'Sponsor', 'battle-shield-sponsorship' ) . '</th><td>' . esc_html( (string) $sponsorship->display_name ) . '</td></tr>';
                 echo '<tr><th>' . esc_html__( 'Contact', 'battle-shield-sponsorship' ) . '</th><td>' . esc_html( $contact ? (string) $contact->email : '—' ) . '</td></tr>';
-                echo '<tr><th>' . esc_html__( 'Amount', 'battle-shield-sponsorship' ) . '</th><td>£' . esc_html( number_format( (float) $sponsorship->total_amount, 2 ) ) . '</td></tr>';
+                echo '<tr><th>' . esc_html__( 'Amount paid', 'battle-shield-sponsorship' ) . '</th><td>£' . esc_html( $total ) . '</td></tr>';
                 echo '<tr><th>' . esc_html__( 'Payment method', 'battle-shield-sponsorship' ) . '</th><td>' . esc_html( ucfirst( (string) $sponsorship->payment_method ) ) . '</td></tr>';
                 echo '</tbody></table>';
 
-                echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" onsubmit="return confirm(\'' . esc_js( __( 'Process refund for this sponsorship? This cannot be undone.', 'battle-shield-sponsorship' ) ) . '\')">';
+                echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" id="bss-refund-form">';
                 echo '<input type="hidden" name="action" value="bss_process_refund" />';
                 echo '<input type="hidden" name="sponsorship_id" value="' . $sponsorship_id . '" />';
+                echo '<input type="hidden" name="total_amount" value="' . esc_attr( $total_raw ) . '" />';
                 wp_nonce_field( self::NONCE_ACTION );
 
                 echo '<table class="form-table" style="max-width:500px;">';
+
+                echo '<tr><th><label for="refund_amount">' . esc_html__( 'Refund amount (£)', 'battle-shield-sponsorship' ) . '</label></th><td>';
+                echo '<input type="number" name="refund_amount" id="refund_amount"'
+                    . ' value="' . esc_attr( $total_raw ) . '"'
+                    . ' min="0.01"'
+                    . ' max="' . esc_attr( $total_raw ) . '"'
+                    . ' step="0.01"'
+                    . ' style="width:8em;"'
+                    . ' required />';
+                echo '<p class="description">' . sprintf(
+                    esc_html__( 'Maximum: £%s. Edit to issue a partial refund.', 'battle-shield-sponsorship' ),
+                    esc_html( $total )
+                ) . '</p>';
+                echo '</td></tr>';
+
                 echo '<tr><th><label for="reason">' . esc_html__( 'Reason', 'battle-shield-sponsorship' ) . '</label></th><td>';
                 echo '<textarea name="reason" id="reason" class="large-text" rows="3" required placeholder="' . esc_attr__( 'Reason for refund…', 'battle-shield-sponsorship' ) . '"></textarea></td></tr>';
                 echo '</table>';
 
                 submit_button( __( 'Process Refund', 'battle-shield-sponsorship' ), 'primary' );
                 echo '</form>';
+
+                // Inline JS: confirm dialog showing the amount, and clamp input to max.
+                ?>
+                <script>
+                (function () {
+                    var form   = document.getElementById('bss-refund-form');
+                    var input  = document.getElementById('refund_amount');
+                    var max    = parseFloat(input.getAttribute('max'));
+
+                    input.addEventListener('change', function () {
+                        var v = parseFloat(this.value);
+                        if (isNaN(v) || v <= 0) { this.value = '0.01'; }
+                        if (v > max) { this.value = max.toFixed(2); }
+                    });
+
+                    form.addEventListener('submit', function (e) {
+                        var amount = parseFloat(input.value);
+                        if (amount > max) {
+                            e.preventDefault();
+                            alert('<?php echo esc_js( __( 'Refund amount cannot exceed the total paid.', 'battle-shield-sponsorship' ) ); ?>');
+                            return;
+                        }
+                        var msg = amount < max
+                            ? '<?php echo esc_js( __( 'Process a PARTIAL refund of £', 'battle-shield-sponsorship' ) ); ?>' + amount.toFixed(2) + '<?php echo esc_js( __( '? This cannot be undone.', 'battle-shield-sponsorship' ) ); ?>'
+                            : '<?php echo esc_js( __( 'Process a full refund of £', 'battle-shield-sponsorship' ) ); ?>' + amount.toFixed(2) + '<?php echo esc_js( __( '? This cannot be undone.', 'battle-shield-sponsorship' ) ); ?>';
+                        if (!confirm(msg)) { e.preventDefault(); }
+                    });
+                }());
+                </script>
+                <?php
+
             } elseif ( $sponsorship ) {
                 echo '<p>' . esc_html__( 'This sponsorship is not in a refundable state.', 'battle-shield-sponsorship' ) . '</p>';
             } else {
@@ -110,10 +160,17 @@ class RefundPage {
 
         $id     = (int) ( $_POST['sponsorship_id'] ?? 0 );
         $reason = sanitize_textarea_field( wp_unslash( $_POST['reason'] ?? '' ) );
+        $total  = (float) ( $_POST['total_amount'] ?? 0.0 );
+        $amount = (float) ( $_POST['refund_amount'] ?? 0.0 );
 
-        $result = ( new RefundService() )->process( $id, $reason );
+        // Server-side: clamp to total so the amount can never exceed what was paid.
+        if ( $amount <= 0 || $amount > $total ) {
+            $amount = $total;
+        }
 
-        if ( $result ) {
+        $result = ( new RefundService() )->process( $id, $reason, $amount );
+
+        if ( $result['ok'] ) {
             wp_safe_redirect( add_query_arg( [ 'page' => 'bss-refunds', 'refunded' => '1' ], admin_url( 'admin.php' ) ) );
         } else {
             wp_safe_redirect( add_query_arg( [ 'page' => 'bss-refunds', 'error' => '1', 'sponsorship_id' => $id ], admin_url( 'admin.php' ) ) );

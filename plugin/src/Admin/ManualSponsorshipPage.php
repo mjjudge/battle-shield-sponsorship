@@ -2,6 +2,7 @@
 
 namespace BattleShieldSponsorship\Admin;
 
+use BattleShieldSponsorship\Database\Schema;
 use BattleShieldSponsorship\Security\RequestGuard;
 use BattleShieldSponsorship\Services\CampaignService;
 use BattleShieldSponsorship\Services\ShieldService;
@@ -11,10 +12,75 @@ defined( 'ABSPATH' ) || exit;
 
 class ManualSponsorshipPage {
 
-    private const NONCE_ACTION = 'bss_create_manual_sponsorship';
+    private const NONCE_ACTION  = 'bss_create_manual_sponsorship';
+    private const LOOKUP_ACTION = 'bss_lookup_contact_by_email';
 
     public function __construct() {
         add_action( 'admin_post_bss_create_manual_sponsorship', [ $this, 'handle_create' ] );
+        add_action( 'wp_ajax_' . self::LOOKUP_ACTION, [ $this, 'handle_lookup' ] );
+        add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_assets' ] );
+    }
+
+    public function enqueue_assets( string $hook ): void {
+        if ( strpos( $hook, 'bss-manual-sponsorship' ) === false ) {
+            return;
+        }
+        wp_enqueue_script(
+            'bss-manual-sponsorship',
+            BSS_PLUGIN_URL . 'assets/js/manual-sponsorship.js',
+            [ 'jquery' ],
+            BSS_VERSION,
+            true
+        );
+        wp_localize_script( 'bss-manual-sponsorship', 'bssManual', [
+            'nonce' => wp_create_nonce( self::LOOKUP_ACTION ),
+        ] );
+    }
+
+    public function handle_lookup(): void {
+        check_ajax_referer( self::LOOKUP_ACTION );
+
+        if ( ! current_user_can( 'bss_manage_sponsorships' ) ) {
+            wp_send_json_error( [ 'found' => false ], 403 );
+        }
+
+        $email = sanitize_email( wp_unslash( $_POST['email'] ?? '' ) );
+        if ( ! $email ) {
+            wp_send_json_success( [ 'found' => false ] );
+        }
+
+        global $wpdb;
+        $contacts_table = Schema::table_name( 'contacts' );
+        $contact = $wpdb->get_row( $wpdb->prepare(
+            "SELECT * FROM {$contacts_table} WHERE email = %s AND anonymised = 0 LIMIT 1",
+            $email
+        ) );
+
+        if ( ! $contact ) {
+            wp_send_json_success( [ 'found' => false ] );
+        }
+
+        // Check whether this contact has declared gift aid in any previous sponsorship.
+        $sponsorships_table = Schema::table_name( 'sponsorships' );
+        $gift_aid = (bool) $wpdb->get_var( $wpdb->prepare(
+            "SELECT gift_aid_declared FROM {$sponsorships_table}
+             WHERE contact_id = %d AND gift_aid_declared = 1 LIMIT 1",
+            (int) $contact->id
+        ) );
+
+        wp_send_json_success( [
+            'found'          => true,
+            'contact_name'   => $contact->contact_name,
+            'phone'          => $contact->phone ?? '',
+            'address_line1'  => $contact->address_line1 ?? '',
+            'address_line2'  => $contact->address_line2 ?? '',
+            'city'           => $contact->city ?? '',
+            'county'         => $contact->county ?? '',
+            'postcode'       => $contact->postcode ?? '',
+            'country'        => $contact->country ?? '',
+            'marketing_opt_in' => (bool) $contact->marketing_opt_in,
+            'gift_aid_declared' => $gift_aid,
+        ] );
     }
 
     public function render(): void {
@@ -67,12 +133,34 @@ class ManualSponsorshipPage {
         echo '<p class="description">' . esc_html__( 'Enter the sponsor\'s details. An existing contact with the same email will be reused.', 'battle-shield-sponsorship' ) . '</p>';
         echo '</td></tr>';
 
+        $this->row( 'email', __( 'Email', 'battle-shield-sponsorship' ),
+            '<input name="email" id="email" type="email" class="regular-text" required />'
+            . '<span id="bss-contact-found" style="display:none;margin-left:8px;color:#2e7d32;font-weight:600;">&#10003; '
+            . esc_html__( 'Existing contact found — details pre-filled.', 'battle-shield-sponsorship' ) . '</span>' );
+
         $this->row( 'contact_name', __( 'Full name', 'battle-shield-sponsorship' ),
             '<input name="contact_name" id="contact_name" type="text" class="regular-text" required />' );
-        $this->row( 'email', __( 'Email', 'battle-shield-sponsorship' ),
-            '<input name="email" id="email" type="email" class="regular-text" required />' );
+
         $this->row( 'phone', __( 'Phone', 'battle-shield-sponsorship' ),
             '<input name="phone" id="phone" type="tel" class="regular-text" />' );
+
+        // Address fields (all optional).
+        echo '<tr><th>' . esc_html__( 'Address', 'battle-shield-sponsorship' ) . '</th><td>';
+        echo '<p class="description">' . esc_html__( 'Optional. Pre-filled from existing contact record if email matches.', 'battle-shield-sponsorship' ) . '</p>';
+        echo '</td></tr>';
+
+        $this->row( 'address_line1', __( 'Address line 1', 'battle-shield-sponsorship' ),
+            '<input name="address_line1" id="address_line1" type="text" class="regular-text" />' );
+        $this->row( 'address_line2', __( 'Address line 2', 'battle-shield-sponsorship' ),
+            '<input name="address_line2" id="address_line2" type="text" class="regular-text" />' );
+        $this->row( 'city', __( 'City', 'battle-shield-sponsorship' ),
+            '<input name="city" id="city" type="text" class="regular-text" />' );
+        $this->row( 'county', __( 'County', 'battle-shield-sponsorship' ),
+            '<input name="county" id="county" type="text" class="regular-text" />' );
+        $this->row( 'postcode', __( 'Postcode', 'battle-shield-sponsorship' ),
+            '<input name="postcode" id="postcode" type="text" style="width:10em;" />' );
+        $this->row( 'country', __( 'Country', 'battle-shield-sponsorship' ),
+            '<input name="country" id="country" type="text" class="regular-text" />' );
 
         $this->row( 'display_name', __( 'Sponsor display name', 'battle-shield-sponsorship' ),
             '<input name="display_name" id="display_name" type="text" class="regular-text" />'
@@ -94,8 +182,12 @@ class ManualSponsorshipPage {
         echo '</select></td></tr>';
 
         echo '<tr><th><label>' . esc_html__( 'Gift Aid', 'battle-shield-sponsorship' ) . '</label></th><td>';
-        echo '<label><input name="gift_aid_declared" type="checkbox" value="1" /> '
+        echo '<label><input name="gift_aid_declared" id="gift_aid_declared" type="checkbox" value="1" /> '
             . esc_html__( 'Sponsor has declared Gift Aid', 'battle-shield-sponsorship' ) . '</label></td></tr>';
+
+        echo '<tr><th><label>' . esc_html__( 'Marketing consent', 'battle-shield-sponsorship' ) . '</label></th><td>';
+        echo '<label><input name="marketing_opt_in" id="marketing_opt_in" type="checkbox" value="1" /> '
+            . esc_html__( 'Sponsor has given consent to ongoing battle event related marketing communication', 'battle-shield-sponsorship' ) . '</label></td></tr>';
 
         echo '<tr><th><label>' . esc_html__( 'Shields', 'battle-shield-sponsorship' ) . '</label></th><td>';
         if ( empty( $available_shields ) ) {
@@ -150,20 +242,27 @@ class ManualSponsorshipPage {
         }
 
         $service_class = new ManualSponsorshipService();
-        $id = $service_class->create( [
+        $result = $service_class->create( [
             'campaign_id'       => (int) ( $_POST['campaign_id'] ?? 0 ),
             'contact_name'      => sanitize_text_field( wp_unslash( $_POST['contact_name'] ?? '' ) ),
             'email'             => sanitize_email( wp_unslash( $_POST['email'] ?? '' ) ),
             'phone'             => sanitize_text_field( wp_unslash( $_POST['phone'] ?? '' ) ),
+            'address_line1'     => sanitize_text_field( wp_unslash( $_POST['address_line1'] ?? '' ) ),
+            'address_line2'     => sanitize_text_field( wp_unslash( $_POST['address_line2'] ?? '' ) ),
+            'city'              => sanitize_text_field( wp_unslash( $_POST['city'] ?? '' ) ),
+            'county'            => sanitize_text_field( wp_unslash( $_POST['county'] ?? '' ) ),
+            'postcode'          => sanitize_text_field( wp_unslash( $_POST['postcode'] ?? '' ) ),
+            'country'           => sanitize_text_field( wp_unslash( $_POST['country'] ?? '' ) ),
             'display_name'      => sanitize_text_field( wp_unslash( $_POST['display_name'] ?? '' ) ),
             'sponsor_url'       => sanitize_url( wp_unslash( $_POST['sponsor_url'] ?? '' ) ),
             'sponsor_phone'     => sanitize_text_field( wp_unslash( $_POST['sponsor_phone'] ?? '' ) ),
             'payment_method'    => sanitize_key( wp_unslash( $_POST['payment_method'] ?? 'other' ) ),
             'gift_aid_declared' => isset( $_POST['gift_aid_declared'] ) ? 1 : 0,
+            'marketing_opt_in'  => isset( $_POST['marketing_opt_in'] ) ? 1 : 0,
             'shields'           => $shields,
         ] );
 
-        wp_safe_redirect( add_query_arg( [ 'page' => 'bss-manual-sponsorship', 'created' => $id ], admin_url( 'admin.php' ) ) );
+        wp_safe_redirect( add_query_arg( [ 'page' => 'bss-manual-sponsorship', 'created' => $result['sponsorship_id'] ], admin_url( 'admin.php' ) ) );
         exit;
     }
 

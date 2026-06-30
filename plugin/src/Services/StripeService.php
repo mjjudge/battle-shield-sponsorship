@@ -97,7 +97,10 @@ class StripeService {
         return hash_equals( $expected, $signature );
     }
 
-    public function refund( string $payment_intent_id, string $charge_id = '' ): string {
+    /**
+     * @param int $amount_pence  Amount in pence to refund. 0 = full refund.
+     */
+    public function refund( string $payment_intent_id, string $charge_id = '', int $amount_pence = 0 ): string {
         $settings   = $this->settings();
         $secret_key = $settings['stripe_secret_key'] ?? '';
 
@@ -105,8 +108,10 @@ class StripeService {
             return '';
         }
 
-        $identifier = $charge_id ?: $payment_intent_id;
-        $body       = $charge_id ? [ 'charge' => $charge_id ] : [ 'payment_intent' => $payment_intent_id ];
+        $body = $charge_id ? [ 'charge' => $charge_id ] : [ 'payment_intent' => $payment_intent_id ];
+        if ( $amount_pence > 0 ) {
+            $body['amount'] = $amount_pence;
+        }
 
         $response = wp_remote_post(
             'https://api.stripe.com/v1/refunds',
